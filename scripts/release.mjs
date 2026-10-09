@@ -17,8 +17,9 @@
  * With --publish, after 1 and 2:
  *   sets the version in package.json and commits it, builds and verifies
  *   the ZIP, tags v<version>, pushes the branch and the tag to origin, and
- *   creates the GitHub release with the ZIP attached (needs the GitHub CLI,
- *   signed in). In a terminal it asks first; elsewhere it needs --yes.
+ *   creates the GitHub release with the ZIP attached (needs the GitHub CLI;
+ *   it uses git's saved GitHub sign-in if gh has none). In a terminal it
+ *   asks first; elsewhere it needs --yes.
  *
  * Usage:
  *   node scripts/release.mjs 1.0.0              build and verify only
@@ -110,10 +111,32 @@ if (!PUBLISH) {
   process.exit(0);
 }
 
+/**
+ * The environment for gh. When gh has no sign-in of its own, borrows the
+ * GitHub token git already saved (Git Credential Manager, the macOS
+ * keychain), for this run only. It is passed in memory, never written or
+ * printed.
+ * @return {?Object} Environment for gh, or null when there is no sign-in.
+ */
+function ghEnv() {
+  if (sh('gh', ['auth', 'status']).ok) return process.env;
+  const r = spawnSync('git', ['credential', 'fill'], {
+    input: 'protocol=https\nhost=github.com\n\n',
+    encoding: 'utf8',
+    timeout: 30_000,
+    env: {...process.env, GCM_INTERACTIVE: 'never', GIT_TERMINAL_PROMPT: '0'},
+  });
+  const token = /^password=(.+)$/m.exec(r.stdout || '')?.[1];
+  if (!token) return null;
+  const env = {...process.env, GH_TOKEN: token};
+  return spawnSync('gh', ['api', 'user'], {env, encoding: 'utf8'}).status === 0 ? env : null;
+}
+
 // Publishing: everything that can fail locally is checked before anything
 // is pushed.
 if (!sh('gh', ['--version']).ok) die('the GitHub CLI is not installed: https://cli.github.com');
-if (!sh('gh', ['auth', 'status']).ok) die('the GitHub CLI is not signed in. Run: gh auth login');
+const GH_ENV = ghEnv();
+if (!GH_ENV) die('no GitHub sign-in for gh or git. Run: gh auth login');
 const remote = sh('git', ['remote', 'get-url', 'origin']);
 if (!remote.ok) die('no "origin" remote. Run: git remote add origin <repo URL>');
 const branch = sh('git', ['branch', '--show-current']).out;
@@ -146,7 +169,9 @@ const push = sh('git', ['push', '-u', 'origin', branch, tag]);
 if (!push.ok) die(`push failed. The tag is local; fix the problem, then run: git push -u origin ${branch} ${tag}\n${push.out}`);
 ok(`pushed ${branch} and ${tag}`);
 
-const rel = sh('gh', ['release', 'create', tag, ZIP, '--title', `${NAME} ${tag}`, '--generate-notes', '--latest']);
+const relRun = spawnSync('gh', ['release', 'create', tag, ZIP, '--title', `${NAME} ${tag}`, '--generate-notes', '--latest'],
+    {cwd: HERE, encoding: 'utf8', env: GH_ENV});
+const rel = {ok: relRun.status === 0, out: `${relRun.stdout || ''}${relRun.stderr || ''}`.trim()};
 if (!rel.ok) die(`the release was not created: ${rel.out}\nThe tag is pushed. Retry: gh release create ${tag} ${ZIP} --generate-notes`);
 ok(`release created: ${rel.out.split('\n').pop()}`);
 console.log('\n  Published.\n');

@@ -11,7 +11,10 @@ and prints the file and line number of a match, not the key.
 ## Network
 
 Only `scripts/release.mjs --publish`, which the maintainer runs: it pushes
-to the git remote and creates a GitHub release through the GitHub CLI. No
+to the git remote and creates a GitHub release through the GitHub CLI.
+If the GitHub CLI has no sign-in of its own, it borrows the GitHub token
+git already saved, for that run only. The token is passed in memory, never
+written to a file or printed. No
 other script makes a network request. The panel profile's server, in
 tools that use it, listens on `127.0.0.1` only and refuses requests from
 other sites.

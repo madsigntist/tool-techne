@@ -54,7 +54,7 @@ Tasks for whoever maintains tool-techne. To start a tool, see
 3. **SCRIPT** `node scripts/release.mjs X.Y.Z --publish`: the same, then
    commits the version, tags, pushes, and creates the GitHub release with
    the ZIP attached. It asks you to type the version first. Needs the
-   GitHub CLI signed in (`gh auth login`, once).
+   GitHub CLI. It uses git's saved GitHub sign-in when `gh` has none.
 
 The README's download link,
 `../../releases/latest/download/tool-techne.zip`, always gets the newest
