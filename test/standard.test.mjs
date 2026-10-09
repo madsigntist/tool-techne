@@ -114,12 +114,19 @@ test('stacks: a profile the stack does not support is refused, by the scaffolder
   assert.ok(hasFail(checkTool(t.dir), /stack must be one of/));
 });
 
-test('a prefix already used by another tool is refused', () => {
+test('prefixes: a chosen one already in use is refused, a made-up one moves to a free one', () => {
   const root = parentFolder();
   assert.equal(scaffold(root, ['--name', 'first-one', '--profile', 'page', '--prefix', 'ab']).status, 0);
   const second = scaffold(root, ['--name', 'second-one', '--profile', 'page', '--prefix', 'ab']);
   assert.equal(second.status, 1);
   assert.match(second.out, /prefix "ab" is already used by first-one/);
+
+  // A prefix the scaffolder made up is moved to a free one instead.
+  const p1 = scaffold(root, ['--name', 'plant-tracker', '--profile', 'page']);
+  const p2 = scaffold(root, ['--name', 'photo-tidy', '--profile', 'page']);
+  assert.equal(p2.status, 0, p2.out);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(p1.dir, 'tool.json'), 'utf8')).commands.prefix, 'pt');
+  assert.equal(JSON.parse(fs.readFileSync(path.join(p2.dir, 'tool.json'), 'utf8')).commands.prefix, 'pt2');
 });
 
 test('ports: the next tool takes the next free one, and a clash fails', () => {

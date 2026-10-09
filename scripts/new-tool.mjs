@@ -61,7 +61,8 @@ const dest = path.join(root, name);
 if (fs.existsSync(dest)) die(`${dest} already exists. Pick another name.`);
 
 const title = opt('title') || name.split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
-const prefix = opt('prefix') || name.split('-').map((w) => w[0]).join('').slice(0, 3);
+const chosenPrefix = opt('prefix');
+let prefix = chosenPrefix || name.split('-').map((w) => w[0]).join('').slice(0, 3);
 if (!/^[a-z][a-z0-9]{0,5}$/.test(prefix)) die('--prefix: 1 to 6 lowercase letters or digits.');
 const shared = argv.includes('--shared');
 const guard = argv.includes('--guard');
@@ -78,8 +79,17 @@ const siblings = discover(root).map((d) => {
     return {};
   }
 });
-const taken = siblings.find((m) => m.commands?.prefix === prefix);
-if (taken) die(`the prefix "${prefix}" is already used by ${taken.name}. Pass a different --prefix.`);
+const prefixes = new Set(siblings.map((m) => m.commands?.prefix));
+if (prefixes.has(prefix)) {
+  // A prefix the person chose is never changed behind their back. One the
+  // scaffolder made up gets a number until it is free.
+  if (chosenPrefix) {
+    const taken = siblings.find((m) => m.commands?.prefix === prefix);
+    die(`the prefix "${prefix}" is already used by ${taken.name}. Pass a different --prefix.`);
+  }
+  const base = prefix;
+  for (let n = 2; prefixes.has(prefix); n += 1) prefix = `${base}${n}`;
+}
 const used = siblings.map((m) => m.port).filter(Number.isInteger);
 const port = {panel: nextPort(used, PANEL_PORT_START), app: nextPort(used, APP_PORT_START)}[profile] ?? null;
 const portEnv = port ? `${prefix.toUpperCase()}_PORT` : '';

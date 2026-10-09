@@ -42,6 +42,7 @@ of. The code they fixed came with it.
 | 1.1 | Every scaffolded tool's tests failed with `Cannot find module ...\test` | `node --test test/` treats a folder argument as a file to run, not a place to search | Tools use bare `node --test`, and tool-techne names its test file. The first tests scaffold real tools and run their whole check, so a broken test command fails tool-techne's own check | GATE | gate | no |
 | 1.2 | The empty register in every new tool would have counted its own example row as a defect, failing the tool's first check | The register lint counts any line that starts like a numbered row, including one inside an HTML comment | The example row is indented. Every scaffold test runs the new tool's full check, register lint included, so a template register that miscounts fails tool-techne's check | GATE | self-review | no |
 | 1.3 | The private template's scaffolder read the register starter from a script in the author's home folder, so on anyone else's computer every new tool had no register | A dependency on one machine's setup, invisible on that machine | The register starter is a skeleton file. Every test scaffolds with the home folder pointed at an empty one and its own git identity, so a file outside tool-techne is missing in the tests too. Positive-controlled: the old home-folder read, put back, fails every scaffold test | GATE | self-review | no |
+| 1.4 | A second tool whose name had the same initials as the first (plant-tracker, photo-tidy) could not be made without knowing to pass --prefix | The scaffolder refused a taken prefix even when it had made the prefix up itself | A made-up prefix gets a number until it is free (pt2). Only a prefix the person chose stops the scaffold. Tested both ways in `test/standard.test.mjs` | GATE | self-review | no |
 
 ## 2. Drift between tools
 
@@ -72,6 +73,6 @@ Every row marked **Again?** = yes, and what that says about its tag.
 
 | | |
 | --- | --- |
-| Defects recorded | 6 |
-| Fixed by a gate or a generator | 6 |
+| Defects recorded | 7 |
+| Fixed by a gate or a generator | 7 |
 | Defect classes that recurred | 0 |
