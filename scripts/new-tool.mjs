@@ -71,7 +71,8 @@ const clean = (t) => t.replace(/[\r\n]+/g, ' ').replace(/"/g, '\'').replace(/[\\
 
 const title = clean(opt('title') || name.split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join(' '));
 const chosenPrefix = opt('prefix');
-let prefix = chosenPrefix || name.split('-').map((w) => w[0]).join('').slice(0, 3);
+const initials = name.split('-').map((w) => w[0]).join('').slice(0, 3);
+let prefix = chosenPrefix || (initials.length >= 2 ? initials : name.replace(/-/g, '').slice(0, 2));
 if (!/^[a-z][a-z0-9]{0,5}$/.test(prefix)) die('--prefix: 1 to 6 lowercase letters or digits.');
 const shared = argv.includes('--shared');
 const guard = argv.includes('--guard');
@@ -140,7 +141,25 @@ const TOKENS = {
   NODE: opt('node') || String(NODE_FLOOR),
   PYTHON_FLOOR,
   PYTHON_VERSION: python ? python.version : PYTHON_FLOOR,
-  STACK_NEEDS: stack === 'python' ? `- Python ${PYTHON_FLOOR} or newer: https://www.python.org/downloads/` : '',
+  NEEDS: {
+    static: 'To use it: a web browser, nothing else.\n\n' +
+      `To work on it: Node.js ${NODE_FLOOR} or newer (https://nodejs.org) and git\n` +
+      '(https://git-scm.com/downloads), for the checks.',
+    node: `- Node.js ${NODE_FLOOR} or newer: https://nodejs.org (choose LTS)\n- git: https://git-scm.com/downloads`,
+    python: `- Python ${PYTHON_FLOOR} or newer: https://www.python.org/downloads/\n` +
+      `- Node.js ${NODE_FLOOR} or newer, for the checks: https://nodejs.org (choose LTS)\n` +
+      '- git: https://git-scm.com/downloads',
+  }[stack],
+  START_HOW: {
+    page: 'Open `index.html` in your web browser: double-click it.',
+    panel: `In a terminal in this folder, run \`npm run gui\`, then open http://localhost:${port} in your browser.`,
+    cli: stack === 'python'
+      ? 'In a terminal in this folder, run `python main.py --help`.'
+      : '[The command that runs it, once it does something.]',
+    app: stack === 'python'
+      ? 'In a terminal in this folder, run `python main.py`.'
+      : '[The command that starts it, once it does something.]',
+  }[profile],
   DATE: new Date().toISOString().slice(0, 10),
 };
 
@@ -207,6 +226,10 @@ if (/onedrive/i.test(dest)) {
   console.log('  WARN  this folder is inside OneDrive. OneDrive and git fight over the same');
   console.log('        files, which causes locked files and conflicting copies. Move your');
   console.log('        tools folder somewhere OneDrive does not sync, like C:\\tools.\n');
+}
+if (/[\\/](downloads|temp|tmp)[\\/]/i.test(dest)) {
+  console.log('  WARN  this folder is inside Downloads or a temporary folder, which can be');
+  console.log('        cleaned out. Move your tools folder somewhere permanent, like C:\\tools.\n');
 }
 
 const layers = [path.join(HERE, 'skeleton', 'core'), path.join(HERE, 'stacks', stack)];
@@ -304,5 +327,5 @@ console.log(`\n  Standard check: ${fails.length ? 'FAIL' : 'OK'}`);
 fails.forEach((f) => console.log(`    FAIL  ${f}`));
 result.warns.forEach((w) => console.log(`    warn  ${w}`));
 console.log(`\n  Made: ${dest}`);
-console.log('  Next: open that folder in your AI assistant and say "Read AGENTS.md, then help me build this."\n');
+console.log('  Next: open that folder in your AI assistant and say "Read AGENTS.md, then help me build the first feature."\n');
 process.exit(fails.length || !committed ? 1 : 0);

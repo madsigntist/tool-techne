@@ -67,7 +67,7 @@ it, never tool-techne.
 | `PORT`, `PORT_ENV` | next free from 4870 (panel) or 4900 (app), `null` otherwise |
 | `NODE` | `--node`, or `NODE_FLOOR` (22) |
 | `PYTHON_FLOOR`, `PYTHON_VERSION` | 3.10, and the major.minor of the Python found when scaffolding a `python` tool |
-| `STACK_NEEDS` | An extra line for the README's "What you need", per stack |
+| `NEEDS`, `START_HOW` | The README's "What you need" (per stack) and "Start it" (per profile and stack) |
 
 Text the person typed (`TITLE`, `PURPOSE`) is cleaned before it is filled
 in: one line, double quotes made single, no backslashes or angle brackets.

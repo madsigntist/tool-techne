@@ -11,8 +11,9 @@ helps you build it.
 
 1. **Get tool-techne**: download `tool-techne.zip` from the Releases page
    of the tool-techne GitHub repo, and unzip it where you will keep your
-   tools. Pick a place OneDrive does not sync, like `C:\tools` on Windows:
-   OneDrive and git fight over the same files. If your folder is called
+   tools. Pick a permanent place, not Downloads, and one OneDrive does not
+   sync, like `C:\tools` on Windows: OneDrive and git fight over the same
+   files. If your folder is called
    `tool-techne-main`, rename it to `tool-techne`.
 2. **Install two free programs**, if you do not have them yet:
    - **Node.js**: https://nodejs.org. Choose the LTS version.
@@ -75,24 +76,28 @@ Then work out which of these you are:
     Terminal at Folder.
   - Linux: right-click in the folder, then Open in Terminal.
 
-### Step 2: Check the folder name and the two programs
+### Step 2: Check the folder and the programs
 
-The folder must be named exactly `tool-techne`: every command here uses
-that name. GitHub's green Download ZIP button names it `tool-techne-main`.
-In editor mode, look at the folder you are in. In chat mode, ask them. If
-it is anything else, walk them through renaming it: close the folder in
-their editor first, rename it in File Explorer or Finder, then open it
-again.
+**The folder.** In editor mode, look at the folder's full path. In chat
+mode, ask them for it.
 
-If the folder's path contains `OneDrive`, recommend moving it first, to a
-place like `C:\tools`. OneDrive syncing a git folder causes locked files
-and conflicting copies.
+- It must be named exactly `tool-techne`: every command here uses that
+  name. GitHub's green Download ZIP button names it `tool-techne-main`.
+- It must be somewhere permanent. Every tool is made beside it, so if it
+  sits in `Downloads`, a `Temp` folder or anywhere under `OneDrive`, move it
+  first, to a place like `C:\tools` (Windows) or a `tools` folder in their
+  home folder (Mac). Temp folders get emptied, and OneDrive fights git over
+  the same files.
 
-Run (or ask them to run):
+To rename or move it: close the folder in their editor first, do it in File
+Explorer or Finder, then open it again from the new place.
+
+**The programs.** Run (or ask them to run):
 
 ```
 node --version
 git --version
+git config user.name
 git config user.email
 ```
 
@@ -105,8 +110,8 @@ git config user.email
 - An installer that asks for an administrator password they do not have:
   on a work computer, their IT team installs it. Stop here until it is
   done.
-- If `git config user.email` prints nothing, ask for the name and email
-  they want on their work, then run:
+- If `git config user.name` or `git config user.email` prints nothing, ask
+  for the name and email they want on their work, then run:
   ```
   git config --global user.name "Their Name"
   git config --global user.email "their@email"
@@ -114,58 +119,85 @@ git config user.email
   Explain: git labels each saved version with this. It can be any email
   they like.
 
-Do not go on until all three work.
+Do not go on until all four print something.
 
-### Step 3: Ask how much detail they want
+### Step 3: Ask about the tool, in one round
 
-Ask: "Do you want me to keep this simple and make the technical choices for
-you, or show you the options?"
+Ask these together, in plain words, in one message:
 
-### Step 4: Ask about the tool, in one round
-
-Ask these together, in plain words, not one at a time:
-
+0. **Keep it simple, or see the options?** "I can make the technical
+   choices for you, or show you each one."
 1. **What should it do?** One or two sentences. (If they already said,
    don't ask again.)
 2. **Will anyone else use it**, or only you?
 3. **How do you picture using it?**
-   - a. Open a page in my web browser
-   - b. A dashboard on my computer with buttons that run tasks
-   - c. Type commands in a terminal
-   - d. Something that runs all the time in the background
+   - a. A page I open in my web browser, like a website that lives on my
+     computer
+   - b. A dashboard with buttons, for jobs that change things on my
+     computer (sorting files, resizing photos)
+   - c. Commands I type in a terminal
+   - d. Something that keeps running in the background and acts on its
+     own, like sending me a reminder
 
-If they chose **show me the options**, also ask:
+If they said **show me the options**, also ask:
 
 4. **A short name** for the folder: lowercase, words joined with hyphens,
    like `plant-tracker`.
-5. **A 2 or 3 letter code** for its AI commands, like `pt`.
+5. **A 2 or 3 letter code**, like `pt`. Explain: some AI assistants let you
+   type short commands for a tool, like `/pt-add`. The code keeps one
+   tool's commands apart from another's.
 6. For b, c or d: **which language?** JavaScript (Node.js), Python, or
    "you choose". Python suits people who know it already, or tools that
-   work with data and files. Panels are JavaScript only.
+   work with data and files. Dashboards are JavaScript only.
 7. If they will share it: **should the tool's own files be locked**, so an
    AI cannot change the tool itself while fixing one piece of data? This
    lock only works in Claude Code.
 
+### Step 4: Check the kind of tool fits the job
+
+Before choosing, compare what they want with what each kind can do. A page
+(a) only does things while it is open in front of them. It cannot:
+
+- remind them, notify them or send anything at a set time
+- do anything while it is closed
+- read or change files on their computer by itself
+
+If what they described needs one of those (words like **remind**, **alert**,
+**every morning**, **when a file appears**, **email me**), say so plainly
+before going on, and offer the honest choices. For example, for "remind me
+to water my plants":
+
+> "A page can show you which plants are due each time you open it, but it
+> can't pop up a reminder by itself. For a real reminder, the tool has to
+> keep running in the background (option d), which is more to set up. Which
+> would you like?"
+
+Go with their answer. Do not pick for them here, even in simple mode.
+
 ### Step 5: Choose, and confirm
 
-Turn their answers into settings with this table:
+Turn their answers into settings:
 
 | Their answer | `--profile` | `--stack` |
 | --- | --- | --- |
-| a. a page in the browser | `page` | `static` (no install needed) |
+| a. a page in the browser | `page` | `static` |
 | b. a dashboard with buttons | `panel` | `node` |
 | c. commands in a terminal | `cli` | `node`, or `python` if they chose it |
-| d. runs all the time | `app` | `node`, or `python` if they chose it |
+| d. runs in the background | `app` | `node`, or `python` if they chose it |
 
-- Someone else will use it: add `--shared`. If they said yes to locking,
-  add `--guard` too.
-- No name given: make a short one from what it does.
-- No code given: use the first letter of each word in the name.
+- **Someone else will use it**: add `--shared`. If they said yes to
+  locking, add `--guard` too.
+- **Name**: theirs, or in simple mode a short one you make from what it
+  does: lowercase, hyphens, two or three words.
+- **Code**: theirs, or leave `--prefix` out and the script picks one.
+- **Title**: the name in ordinary words, like `Plant Tracker`. Leave
+  `--title` out to have the script make it from the name.
 - **Purpose**: one sentence, in their words, saying what it does and for
   whom.
 
-**Not sure between a and c?** Recommend **a**. A page needs nothing
-installed and anyone can open it.
+**Not sure between a and b?** Ask whether anything has to happen to files
+on their computer. If not, recommend **a**: a page needs nothing installed
+and opens like a website.
 
 **Python**: before Step 6, run `python --version` (on a Mac,
 `python3 --version`). It must print Python 3.10 or higher. If not, walk
@@ -179,11 +211,11 @@ others)? Say so plainly. Offer the nearest stack, or `--profile cli` with
 `--stack node` as a starting shell they replace later.
 
 Show the choices back to them as a short list, in plain words, and ask for
-a yes. For example:
+a yes. Say which ones you chose for them. For example:
 
-> - Name: plant-tracker
+> - Name: plant-tracker (I picked this)
 > - What it is: a page you open in your browser
-> - What it does: Reminds me which plants need water this week.
+> - What it does: Shows me which plants need water this week.
 > - Only you will use it
 
 ### Step 6: Make it
@@ -191,42 +223,59 @@ a yes. For example:
 From inside the `tool-techne` folder, run:
 
 ```
-node scripts/new-tool.mjs --name <name> --profile <profile> --stack <stack> --prefix <code> --title "<Title>" --purpose "<one sentence>"
+node scripts/new-tool.mjs --name <name> --profile <profile> --stack <stack> --purpose "<one sentence>"
 ```
 
-Add `--shared` and `--guard` if they apply. To preview without writing
+Add `--prefix <code>` and `--title "<Title>"` if they gave them, and
+`--shared` and `--guard` if they apply. To preview without writing
 anything, add `--dry-run`.
 
 Read what it prints:
 
 - **Ends with `Standard check: OK`**: done. Tell them in plain words what
   was made and where.
+- **`WARN`**: read it to them. A OneDrive or Temp warning means move the
+  folders (Step 2) and run it again.
 - **`Stopped:`** at the start: the message says what to change. Fix that
   setting and run it again.
-- **`FAIL first commit`**: git needs their name and email. Go back to
-  Step 2.
+- **`FAIL first commit`**: git needs their name and email. Do the
+  `git config --global` part of Step 2, then in the new folder run
+  `git add -A` and `git commit -m "First commit"`.
 - Anything else: show them the lines marked FAIL, and explain each one.
 
-### Step 7: Write down what they decided
+### Step 7: Write down what was decided
 
-The new folder has documents with placeholders in square brackets. Fill in
-only what they told you. Leave the rest in brackets. Never invent content.
+Work in the new tool's folder. Its documents have placeholders in square
+brackets. Fill in what this conversation settled, and leave anything else
+in brackets. Never invent features, users or plans.
 
-- `ROADMAP.md`, under **Decisions**: each choice from Step 5, with their
-  reason if they gave one.
-- `README.md`: the "Start it" section.
-- `AGENTS.md`: any rule they want every AI to follow in this tool.
+- `ROADMAP.md`, **Start here**: one or two lines: the tool was just made,
+  and what the first feature is (from what they said it should do).
+- `ROADMAP.md`, **Decisions**: each choice from Step 5, one line each, with
+  their reason if they gave one. Mark choices you made for them as "chosen
+  by the AI, simple mode".
+- `README.md`: replace the bracketed placeholders you can fill. Delete the
+  ones that do not apply to this kind of tool.
+- `AGENTS.md`: add a rule only if they asked for one.
 
-### Step 8: Hand over
+### Step 8: Save, then hand over
 
-Tell them:
+In editor mode, in the new tool's folder:
 
-1. Open the new folder in their AI assistant (or, in chat mode, start a new
-   chat and paste in the new folder's `AGENTS.md`).
-2. Say "Read AGENTS.md, then help me build the first feature."
-3. Next time they want a tool, come back to the `tool-techne` folder and
-   start again from the top of this file. It can be used for any number of
-   tools.
+1. Run `node scripts/check.mjs`. It must end with "Everything passed."
+2. Commit: `git add -A`, then `git commit -m "Record first decisions"`.
+   Tell them a commit is a saved point they can go back to, and that git
+   checks each commit for passwords and keys before saving it.
 
-Then commit the filled-in documents in the new folder (editor mode), with a
-message like "Record first decisions".
+In chat mode, give them those two steps to run, in the new folder.
+
+Then tell them:
+
+1. **Open the new folder in their AI assistant.** In VS Code or Cursor:
+   File, then Open Folder, then the new folder. In Claude Code: type
+   `/exit`, then in the terminal `cd ../<name>` and `claude`. In a browser
+   chat: start a new chat and paste in the new folder's `AGENTS.md`.
+2. **Say "Read AGENTS.md, then help me build the first feature."**
+3. **Next time they want a tool**, come back to the `tool-techne` folder
+   and start again from the top of this file. It can be used for any
+   number of tools.

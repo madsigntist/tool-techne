@@ -66,6 +66,20 @@ of. The code they fixed came with it.
 | --- | --- | --- | --- | --- | --- | --- |
 | 4.1 | On macOS the edit guard let every edit through, so a "locked" tool was not locked | Node resolves the guard's own location to its real path, but the file paths it is given can go through a symlink (macOS temp folders: /var is /private/var). The two never matched, so every file looked like it was outside the tool | Both paths are resolved to real paths before comparing. The guard test reaches the tool through a link (a junction on Windows) and expects a deny. Positive-controlled: the old guard fails it on Windows too | GATE | gate | no |
 
+## 5. Guided start
+
+Rows 5.1 to 5.5 were found by a walkthrough: a fresh AI agent, with no other
+context, followed START-HERE.md for a made-up beginner and reported every
+place it had to guess.
+
+| # | Problem | Root cause | Fix | Tag | Found by | Again? |
+| --- | --- | --- | --- | --- | --- | --- |
+| 5.1 | Someone who asked for a tool that "reminds me" was steered to a page, which cannot remind anyone | The kind of tool was chosen by how the person pictured using it, never checked against what it had to do | START-HERE Step 4 checks the fit first: a page only works while open, so reminders, schedules and file work are raised with the person before choosing | RULE | reviewer | no |
+| 5.2 | A page tool's README told its user to install Node.js, and said to open `http://localhost:null` | One README template served every kind of tool, with placeholders meant for a panel | "What you need" and "Start it" are filled per stack and kind. The page scaffold test asserts the README has no port, token or stray placeholder | GATE | reviewer | no |
+| 5.3 | A one-word name made a one-letter command code, against START-HERE's own "2 or 3 letters" | The code was the initials of each word, however many there were | A name with fewer than two words takes its first two letters. Tested with `plants` | GATE | reviewer | no |
+| 5.4 | If git had an email but no name, START-HERE's fix for a failed first commit sent the AI back to a step that passed, in a loop | Step 2 checked only `git config user.email` | Step 2 checks both, and the failed-commit fix says exactly what to run | RULE | reviewer | no |
+| 5.5 | The handover asked the person to switch folders before the work was committed, and the phrase to type differed between START-HERE and the script | Step 8 listed the commit after the handover, and the two texts were written separately | Step 8 checks and commits first, then hands over with how to open the folder in each assistant. One phrase in both places | RULE | reviewer | no |
+
 ---
 
 ## Recurrence audit
@@ -82,6 +96,6 @@ Every row marked **Again?** = yes, and what that says about its tag.
 
 | | |
 | --- | --- |
-| Defects recorded | 11 |
-| Fixed by a gate or a generator | 11 |
+| Defects recorded | 16 |
+| Fixed by a gate or a generator | 13 |
 | Defect classes that recurred | 0 |

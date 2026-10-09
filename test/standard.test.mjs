@@ -75,6 +75,15 @@ test('a static page tool meets the standard and passes its own check, outside an
   assert.ok(!fs.existsSync(path.join(root, '.gitignore')), 'no parent .gitignore when the parent is not a repo');
   assert.match(fs.readFileSync(path.join(t.dir, 'AGENTS.md'), 'utf8'), /Tracks books I want to read\./);
   assert.match(fs.readFileSync(path.join(t.dir, 'CLAUDE.md'), 'utf8'), /^@AGENTS\.md$/m);
+  const readme = fs.readFileSync(path.join(t.dir, 'README.md'), 'utf8');
+  assert.match(readme, /Open `index\.html` in your web browser/, 'a page README says how to open it');
+  assert.match(readme, /To use it: a web browser, nothing else/);
+  assert.doesNotMatch(readme, /localhost|\{\{|\[How to start/, 'no port, token or placeholder meant for another kind of tool');
+  assert.equal(r.manifest.commands.prefix, 'rl', 'initials of reading-list');
+
+  // A one-word name still gets a two-letter code.
+  const one = scaffold(root, ['--name', 'plants', '--profile', 'page']);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(one.dir, 'tool.json'), 'utf8')).commands.prefix, 'pl');
   const check = runIn(t.dir, 'scripts/check.mjs');
   assert.equal(check.status, 0, check.out);
   assert.match(check.out, /Everything passed/);
@@ -418,6 +427,10 @@ test('a tools folder inside OneDrive gets a warning', () => {
   const t = scaffold(root, ['--name', 'synced-tool', '--profile', 'page']);
   assert.equal(t.status, 0, t.out);
   assert.match(t.out, /WARN {2}this folder is inside OneDrive/);
+
+  const dl = path.join(parentFolder(), 'Downloads');
+  fs.mkdirSync(dl);
+  assert.match(scaffold(dl, ['--name', 'from-downloads', '--profile', 'page']).out, /WARN {2}this folder is inside Downloads/);
 });
 
 test('panel-core: refuses other hosts and origins, runs one job', async () => {

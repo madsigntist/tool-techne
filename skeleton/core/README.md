@@ -2,17 +2,15 @@
 
 {{PURPOSE}}
 
-<!-- The README is for someone meeting the tool: what it is, how to set it
-     up, how to start it. Step-by-step tasks go in RUNBOOK.md. Delete this
-     comment once the sections below are filled in. -->
+## Start it
+
+{{START_HOW}}
 
 ## What you need
 
-- Node.js 22 or newer: https://nodejs.org (choose LTS)
-- git: https://git-scm.com/downloads
-{{STACK_NEEDS}}
+{{NEEDS}}
 
-## Set it up
+## Set it up for working on it
 
 Open a terminal in this folder and run:
 
@@ -20,12 +18,8 @@ Open a terminal in this folder and run:
 node scripts/install.mjs
 ```
 
-It checks what is installed and sets up the rest. It is safe to run again.
-
-## Start it
-
-[How to start it. A page: open index.html in your browser. A panel: run
-`npm run gui`, then open http://localhost:{{PORT}}.]
+It checks what is installed and sets up the rest, including the check that
+runs before each commit. It is safe to run again.
 
 ## Check it
 
@@ -33,7 +27,7 @@ It checks what is installed and sets up the rest. It is safe to run again.
 node scripts/check.mjs
 ```
 
-Runs every check. Run it before each commit.
+Runs every check. Run it before you share a change.
 
 ## Working on it with an AI assistant
 
