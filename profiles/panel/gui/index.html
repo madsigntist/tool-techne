@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{TITLE}}</title>
+  <style>
+    :root {
+      --bg: #f7f7f5;
+      --surface: #ffffff;
+      --text: #1d1d1b;
+      --muted: #5f5f5a;
+      --line: #d9d9d4;
+      --accent: #2456c9;
+      --accent-text: #ffffff;
+      --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161615;
+        --surface: #20201e;
+        --text: #ececea;
+        --muted: #a3a39d;
+        --line: #3a3a37;
+        --accent: #7aa2ff;
+        --accent-text: #0d0d0c;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 1rem/1.5 system-ui, sans-serif;
+    }
+    .panel { max-width: 60rem; margin: 0 auto; padding: 1.5rem 1rem; }
+    .panel__head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .panel__title { font-size: 1.25rem; margin: 0; }
+    .panel__card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+    .panel__row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    .panel__btn {
+      font: inherit;
+      padding: 0.4rem 0.9rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .panel__btn:hover { border-color: var(--accent); color: var(--text); }
+    .panel__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .panel__btn--primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+    .panel__btn--primary:hover { color: var(--accent-text); }
+    .panel__out {
+      font-family: var(--mono);
+      font-size: 0.875rem;
+      white-space: pre-wrap;
+      min-height: 12rem;
+      max-height: 60vh;
+      overflow: auto;
+      margin: 0;
+    }
+    .panel__muted { color: var(--muted); }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <div class="panel__head">
+      <h1 class="panel__title">{{TITLE}}</h1>
+      <button class="panel__btn" id="shutdown" type="button">Shut down</button>
+    </div>
+
+    <section class="panel__card" aria-labelledby="run-h">
+      <h2 id="run-h" class="panel__title">Run</h2>
+      <div class="panel__row">
+        <label for="record">Record</label>
+        <select id="record"><option value="">(none)</option></select>
+      </div>
+      <div class="panel__row" id="actions" style="margin-top: 0.75rem"></div>
+    </section>
+
+    <section class="panel__card" aria-labelledby="out-h">
+      <div class="panel__head">
+        <h2 id="out-h" class="panel__title">Output</h2>
+        <button class="panel__btn" id="stop" type="button">Stop</button>
+      </div>
+      <p class="panel__muted" id="status" role="status">Nothing run yet.</p>
+      <pre class="panel__out" id="out" tabindex="0" aria-labelledby="out-h"></pre>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const out = document.getElementById('out');
+      const recordSel = document.getElementById('record');
+      const status = document.getElementById('status');
+
+      /**
+       * Runs one action and streams its output into the panel.
+       * @param {string} action Key of the server's ACTIONS.
+       * @param {boolean} live Whether it needs the record name typed back.
+       * @return {!Promise<void>}
+       */
+      async function run(action, live) {
+        const record = recordSel.value || undefined;
+        const body = {action, record};
+        if (live) {
+          body.confirm = window.prompt(`${action} is live. Type the record name to confirm.`) || '';
+        }
+        out.textContent = '';
+        status.textContent = `Running ${action}.`;
+        try {
+          const res = await fetch('/api/run', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body),
+          });
+          if (!res.ok) {
+            out.textContent = (await res.json()).error;
+            status.textContent = `${action} did not start.`;
+            return;
+          }
+          const reader = res.body.getReader();
+          const dec = new TextDecoder();
+          for (;;) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            out.textContent += dec.decode(value);
+            out.scrollTop = out.scrollHeight;
+          }
+          const end = /\[exit ([^,\]]+)/.exec(out.textContent);
+          status.textContent = `${action} finished${end ? ` (exit ${end[1]})` : ''}.`;
+        } catch (e) {
+          out.textContent += `\n${e.message}`;
+          status.textContent = `${action} failed: ${e.message}`;
+        }
+      }
+
+      /**
+       * Loads records and actions from the server and draws the buttons.
+       * @return {!Promise<void>}
+       */
+      async function load() {
+        const state = await (await fetch('/api/state')).json();
+        for (const r of state.records) {
+          recordSel.add(new Option(r, r));
+        }
+        const wrap = document.getElementById('actions');
+        for (const a of state.actions) {
+          const live = state.live.includes(a);
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = `panel__btn${live ? '' : ' panel__btn--primary'}`;
+          b.textContent = live ? `${a} (live)` : a;
+          b.addEventListener('click', () => run(a, live));
+          wrap.append(b);
+        }
+      }
+
+      document.getElementById('stop').addEventListener('click', () => {
+        fetch('/api/stop', {method: 'POST'});
+      });
+      document.getElementById('shutdown').addEventListener('click', async () => {
+        await fetch('/api/shutdown', {method: 'POST'});
+        document.body.textContent = 'Panel shut down. Close this tab.';
+      });
+
+      load();
+    })();
+  </script>
+</body>
+</html>

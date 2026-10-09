@@ -1,0 +1,34 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f \"$CLAUDE_PROJECT_DIR/scripts/lint-register.mjs\" ] || exit 0; node \"$CLAUDE_PROJECT_DIR/scripts/lint-register.mjs\" >/dev/null 2>&1 || printf \"%s\" \"{\\\"systemMessage\\\":\\\"DEFECT-REGISTER.md is stale. Run: node scripts/lint-register.mjs\\\"}\"",
+            "timeout": 30,
+            "statusMessage": "Checking the defect register"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f \"$CLAUDE_PROJECT_DIR/scripts/hooks/setup-check.mjs\" ] || exit 0; node \"$CLAUDE_PROJECT_DIR/scripts/hooks/setup-check.mjs\"",
+            "timeout": 30,
+            "statusMessage": "Checking tool-techne is set up"
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/check-standard.mjs\" --all --hook",
+            "timeout": 60,
+            "statusMessage": "Checking your tools"
+          }
+        ]
+      }
+    ]
+  }
+}

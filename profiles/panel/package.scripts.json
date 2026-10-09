@@ -1,0 +1,4 @@
+{
+  "gui": "node gui/server.mjs",
+  "status": "node scripts/status.mjs"
+}

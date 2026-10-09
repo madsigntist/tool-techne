@@ -1,0 +1,19 @@
+{
+  "name": "tool-techne",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Helps anyone start a tool with any AI assistant: a guided start, a tool standard, and the checks that keep each tool to it.",
+  "license": "MIT",
+  "author": "Michael Kelly",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "new-tool": "node scripts/new-tool.mjs",
+    "check-standard": "node scripts/check-standard.mjs",
+    "setup": "node scripts/install.mjs",
+    "test": "node --test test/standard.test.mjs",
+    "check": "node scripts/check.mjs"
+  }
+}

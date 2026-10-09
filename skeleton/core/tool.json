@@ -1,0 +1,26 @@
+{
+  "standard": 1,
+  "name": "{{NAME}}",
+  "title": "{{TITLE}}",
+  "purpose": "{{PURPOSE}}",
+  "profile": "{{PROFILE}}",
+  "stack": "{{STACK}}",
+  "shared": {{SHARED}},
+  "port": {{PORT}},
+  "portEnv": "{{PORT_ENV}}",
+  "commands": { "prefix": "{{PREFIX}}", "install": "tool" },
+  "docs": {
+    "readme": "README.md",
+    "runbook": "RUNBOOK.md",
+    "architecture": "ARCHITECTURE.md",
+    "roadmap": "ROADMAP.md",
+    "agents": "AGENTS.md",
+    "register": "DEFECT-REGISTER.md"
+  },
+  "check": "node scripts/check.mjs",
+  "test": "",
+  "reads": [],
+  "vendored": [],
+  "kit": [],
+  "guard": null
+}

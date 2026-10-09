@@ -1,0 +1,17 @@
+# Settings and passwords. Never in the history.
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# What the tool saves while it runs, one folder per record.
+data/
+
+node_modules/
+*.log
+
+# Claude Code: local settings and the edit-guard unlock marker
+.claude/settings.local.json
+.claude/tool-unlock.json

@@ -1,0 +1,50 @@
+# Security
+
+For anyone checking tool-techne before using it.
+
+## Passwords and keys
+
+tool-techne uses none and asks for none. It never reads `.env` or
+`secrets/`. The secrets scan reads files only to look for key-shaped text,
+and prints the file and line number of a match, not the key.
+
+## Network
+
+None. No script makes a network request. The panel profile's server, in
+tools that use it, listens on `127.0.0.1` only and refuses requests from
+other sites.
+
+## What it runs
+
+- `node` and `git`, with fixed arguments and no shell.
+- `npm install` from `scripts/install.mjs`, only when a tool's
+  `package.json` lists dependencies. On Windows it goes through a shell,
+  because npm is a script there. The arguments are fixed.
+- A tool's own `test` command from its `tool.json`, through a shell, when
+  that tool's `scripts/check.mjs` runs. This is the tool's own setting.
+- Claude Code hooks, listed in `.claude/settings.json`: the register lint
+  and the setup and standard checks. All read-only.
+
+## What it changes
+
+- `new-tool.mjs`: creates the new tool's folder, and adds one line to the
+  parent folder's `.gitignore` if that folder is a git repo.
+- `install.mjs`: copies slash commands into `.claude/commands/` (or where
+  `--scope` says).
+- `kit.mjs sync`: overwrites kit copies in tools.
+
+Nothing outside the folder that holds tool-techne and its tools, except
+`--scope user`, which writes to `~/.claude/commands/`.
+
+## Data it keeps
+
+None.
+
+## Dependencies
+
+None. Node.js built-in modules only.
+
+## Open items
+
+- The secrets scan matches known key shapes. It does not catch a password
+  typed as an ordinary word.

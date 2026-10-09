@@ -1,0 +1,39 @@
+{
+  "standard": 1,
+  "name": "tool-techne",
+  "title": "tool-techne",
+  "purpose": "Helps anyone start a tool with any AI assistant: a guided start, a tool standard, and the checks that keep each tool to it.",
+  "profile": "cli",
+  "stack": "node",
+  "shared": true,
+  "port": null,
+  "commands": {
+    "prefix": "new",
+    "install": "tool"
+  },
+  "docs": {
+    "readme": "README.md",
+    "runbook": "RUNBOOK.md",
+    "architecture": "ARCHITECTURE.md",
+    "roadmap": "ROADMAP.md",
+    "agents": "AGENTS.md",
+    "register": "DEFECT-REGISTER.md",
+    "security": "SECURITY.md",
+    "standard": "TOOL-STANDARD.md",
+    "start": "START-HERE.md",
+    "glossary": "GLOSSARY.md",
+    "further": "GOING-FURTHER.md"
+  },
+  "check": "node scripts/check.mjs",
+  "test": "node --test test/standard.test.mjs && node scripts/check-standard.mjs",
+  "reads": [],
+  "vendored": [],
+  "guard": null,
+  "kit": [
+    "check",
+    "check-secrets",
+    "install",
+    "lint-register-table",
+    "setup-check"
+  ]
+}
