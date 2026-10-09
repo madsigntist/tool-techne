@@ -294,6 +294,19 @@ test('guard: scaffolded guard locks tool files and opens data/', () => {
   call({hook_event_name: 'UserPromptSubmit', prompt: '/dg-tool fix it'});
   assert.equal(edit('scripts/install.mjs'), '');
   assert.match(call({hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: {command: 'rm .claude/tool-unlock.json'}}), /"deny"/);
+
+  // Reached through a symlink (macOS temp folders always are), the tool is
+  // still locked. A junction on Windows needs no admin rights.
+  fs.rmSync(path.join(t.dir, '.claude', 'tool-unlock.json'));
+  const link = path.join(root, 'via-link');
+  fs.symlinkSync(t.dir, link, process.platform === 'win32' ? 'junction' : 'dir');
+  const viaLink = spawnSync(process.execPath, [hook], {
+    input: JSON.stringify({hook_event_name: 'PreToolUse', tool_name: 'Edit',
+      tool_input: {file_path: path.join(link, 'scripts', 'install.mjs')}}),
+    encoding: 'utf8',
+    env: {...process.env, CLAUDE_PROJECT_DIR: link},
+  }).stdout;
+  assert.match(viaLink, /"deny"/, 'an edit through a symlink got past the guard');
 });
 
 test('kit: an edited copy fails the check, and sync repairs it', () => {

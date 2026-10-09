@@ -60,6 +60,12 @@ of. The code they fixed came with it.
 | 3.1 | A copy of tool-techne from a ZIP would have failed its own check, and the Claude startup hook would have reported it failing every session | A ZIP has no .git folder, and tool-techne checked itself with the rule that every tool is its own git repo, including from `check-standard --all` | tool-techne's own test leaves out the git rule for itself, and `--all` checks only the tools beside it. `release.mjs` unzips every release and runs the full check in the copy before anything is published, and a test does the same from the last commit | GATE | self-review | no |
 | 3.2 | The docs said Node.js 18 or newer, and it had only ever run on 24. New tools also required whatever version made them, so a tool made on 24 refused to set up on 22 | The supported version was a claim nothing tested, and the scaffolder used the running version instead of a floor | The floor is 22, set in one place (`NODE_FLOOR`) and used for new tools. CI runs the full check on 22 on every change | GATE | self-review | no |
 
+## 4. Edit guard
+
+| # | Problem | Root cause | Fix | Tag | Found by | Again? |
+| --- | --- | --- | --- | --- | --- | --- |
+| 4.1 | On macOS the edit guard let every edit through, so a "locked" tool was not locked | Node resolves the guard's own location to its real path, but the file paths it is given can go through a symlink (macOS temp folders: /var is /private/var). The two never matched, so every file looked like it was outside the tool | Both paths are resolved to real paths before comparing. The guard test reaches the tool through a link (a junction on Windows) and expects a deny. Positive-controlled: the old guard fails it on Windows too | GATE | gate | no |
+
 ---
 
 ## Recurrence audit
@@ -76,6 +82,6 @@ Every row marked **Again?** = yes, and what that says about its tag.
 
 | | |
 | --- | --- |
-| Defects recorded | 10 |
-| Fixed by a gate or a generator | 10 |
+| Defects recorded | 11 |
+| Fixed by a gate or a generator | 11 |
 | Defect classes that recurred | 0 |

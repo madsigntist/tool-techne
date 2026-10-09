@@ -45,13 +45,33 @@ const UNLOCK_CMD = `${PREFIX}-tool`;
 const OPEN = (manifest.guard?.open || ['data']).map((p) => path.normalize(p));
 
 /**
+ * Resolves symlinks in a path that may not exist yet, through its nearest
+ * existing parent. Without this, a tool reached through a symlink (on macOS
+ * every temp folder: /var is really /private/var) looks like it is outside
+ * itself, and the guard lets every edit through.
+ * @param {string} p An absolute path.
+ * @return {string} It, with symlinks resolved.
+ */
+function real(p) {
+  let head = p;
+  const tail = [];
+  while (!fs.existsSync(head)) {
+    const up = path.dirname(head);
+    if (up === head) return p;
+    tail.unshift(path.basename(head));
+    head = up;
+  }
+  return path.join(fs.realpathSync.native(head), ...tail);
+}
+
+/**
  * @param {string} p A path from a tool call, absolute or project-relative.
  * @return {{inTool: boolean, rel: string}} Whether it is inside the tool
  *     folder, and its path relative to it.
  */
 function locate(p) {
-  const abs = path.resolve(process.env.CLAUDE_PROJECT_DIR || ROOT, p);
-  const rel = path.relative(ROOT, abs);
+  const abs = real(path.resolve(process.env.CLAUDE_PROJECT_DIR || ROOT, p));
+  const rel = path.relative(real(ROOT), abs);
   return {inTool: !rel.startsWith('..') && !path.isAbsolute(rel), rel};
 }
 
@@ -109,7 +129,7 @@ if (event === 'PreToolUse') {
   if (!target) process.exit(0);
   const {inTool, rel} = locate(target);
   if (!inTool) process.exit(0);
-  if (path.resolve(ROOT, rel) === MARKER) {
+  if (rel === path.join('.claude', 'tool-unlock.json')) {
     deny(MARKER_MSG);
     process.exit(0);
   }
