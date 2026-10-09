@@ -24,6 +24,12 @@
  * A line that is a known false alarm can end with the comment
  * `secret-scan: allow`. Use it for example values, never for a real key.
  *
+ * Folders of third-party data the tool collects (pages harvested from a
+ * live site, which carry that site's own public browser keys) can be
+ * skipped by listing them in tool.json "secretsIgnore", as patterns like
+ * "sites/*\/_source/**". Every run says how many files that skipped. Never
+ * list a folder where this tool's own settings or credentials could land.
+ *
  * WHAT THIS CANNOT CHECK: a password typed as an ordinary word. It catches
  * the shapes keys have, not every secret.
  *
@@ -82,8 +88,32 @@ function candidates() {
   return out;
 }
 
+/**
+ * @param {string} glob A pattern: ** for any folders, * within one name.
+ * @return {!RegExp} It, as a whole-path regular expression.
+ */
+function globToRe(glob) {
+  const esc = glob.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*\*\//g, '\u0000').replace(/\*\*/g, '\u0001').replace(/\*/g, '[^/]*')
+    .replace(/\u0000/g, '(?:.*/)?').replace(/\u0001/g, '.*');
+  return new RegExp(`^${esc}$`);
+}
+
+let ignore = [];
+try {
+  const list = JSON.parse(fs.readFileSync(path.join(ROOT, 'tool.json'), 'utf8')).secretsIgnore;
+  ignore = Array.isArray(list) ? list.map(globToRe) : [];
+} catch {
+  /* no tool.json: scan everything */
+}
+
 const findings = [];
+let skipped = 0;
 for (const rel of candidates()) {
+  if (ignore.some((re) => re.test(rel))) {
+    skipped += 1;
+    continue;
+  }
   const named = SECRET_FILES.find((s) => s.re.test(rel) && !(s.except && s.except.test(rel)));
   if (named) {
     findings.push(`${rel}: ${named.why}. Add it to .gitignore, or move it out of the folder.`);
@@ -113,4 +143,5 @@ if (findings.length) {
   console.log('enough: cancel the key with whoever issued it, and make a new one.');
   process.exit(1);
 }
-console.log('PASS  no secrets found in files git would keep');
+console.log('PASS  no secrets found in files git would keep' +
+  (skipped ? ` (${skipped} file(s) skipped by tool.json secretsIgnore)` : ''));

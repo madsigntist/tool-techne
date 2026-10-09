@@ -274,6 +274,20 @@ test('secrets: the scan fails on each kind of secret, and the whole check fails 
   fs.writeFileSync(path.join(t.dir, 'example.js'), `const sample = '${awsKey}'; // secret-scan: allow\n`);
   assert.equal(scan().status, 0);
 
+  // Harvested third-party data can be skipped by pattern; nothing else is.
+  const mp = path.join(t.dir, 'tool.json');
+  const manifest = fs.readFileSync(mp, 'utf8');
+  fs.writeFileSync(mp, JSON.stringify({...JSON.parse(manifest), secretsIgnore: ['sites/*/_source/**']}));
+  fs.mkdirSync(path.join(t.dir, 'sites', 'acme', '_source', 'deep'), {recursive: true});
+  fs.writeFileSync(path.join(t.dir, 'sites', 'acme', '_source', 'deep', 'page.json'), `{"k":"${awsKey}"}\n`);
+  const skippedRun = scan();
+  assert.equal(skippedRun.status, 0, skippedRun.out);
+  assert.match(skippedRun.out, /1 file\(s\) skipped by tool\.json secretsIgnore/);
+  fs.writeFileSync(path.join(t.dir, 'sites', 'acme', 'built.json'), `{"k":"${awsKey}"}\n`);
+  assert.match(scan().out, /sites\/acme\/built\.json:1: looks like an AWS access key/, 'outside the pattern is still scanned');
+  fs.rmSync(path.join(t.dir, 'sites'), {recursive: true});
+  fs.writeFileSync(mp, manifest);
+
   fs.writeFileSync(path.join(t.dir, 'leak.js'), `const k = '${awsKey}';\n`);
   const check = runIn(t.dir, 'scripts/check.mjs');
   assert.equal(check.status, 1);

@@ -235,6 +235,9 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
   if (docs.register && !JSON.stringify(hooks.Stop || []).includes('lint-register')) {
     fails.push('no Stop hook running lint-register in .claude/settings.json');
   }
+  if (m.secretsIgnore !== undefined && !(Array.isArray(m.secretsIgnore) && m.secretsIgnore.every((s) => typeof s === 'string'))) {
+    fails.push('tool.json: "secretsIgnore" must be a list of path patterns');
+  }
   if (m.setupExtra !== undefined) {
     if (!Array.isArray(m.setupExtra)) fails.push('tool.json: "setupExtra" must be a list of script paths');
     else {

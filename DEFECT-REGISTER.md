@@ -81,6 +81,12 @@ place it had to guess.
 | 5.4 | If git had an email but no name, START-HERE's fix for a failed first commit sent the AI back to a step that passed, in a loop | Step 2 checked only `git config user.email` | Step 2 checks both, and the failed-commit fix says exactly what to run | RULE | reviewer | no |
 | 5.5 | The handover asked the person to switch folders before the work was committed, and the phrase to type differed between START-HERE and the script | Step 8 listed the commit after the handover, and the two texts were written separately | Step 8 checks and commits first, then hands over with how to open the folder in each assistant. One phrase in both places | RULE | reviewer | no |
 
+## 6. Secrets scan
+
+| # | Problem | Root cause | Fix | Tag | Found by | Again? |
+| --- | --- | --- | --- | --- | --- | --- |
+| 6.1 | A tool that keeps pages harvested from live websites failed the secrets scan on a website's own public browser key, with no honest way to pass it | The scan had a per-line allow comment, which cannot go in harvested JSON, and no way to mark a folder as third-party data | `tool.json` `secretsIgnore` lists such folders by pattern. Every run says how many files it skipped, and the test proves a file just outside the pattern is still caught | GATE | gate | no |
+
 ---
 
 ## Recurrence audit
@@ -97,6 +103,6 @@ Every row marked **Again?** = yes, and what that says about its tag.
 
 | | |
 | --- | --- |
-| Defects recorded | 17 |
-| Fixed by a gate or a generator | 14 |
+| Defects recorded | 18 |
+| Fixed by a gate or a generator | 15 |
 | Defect classes that recurred | 0 |

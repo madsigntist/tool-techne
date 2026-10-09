@@ -167,6 +167,12 @@ committed `.env.example` showing what is needed. `check-secrets` fails on a
 committed `.env`, anything in `secrets/`, key files, and text shaped like a
 real key. **Checked**, by the tool's own check.
 
+A tool that collects third-party data (pages harvested from a live site,
+which carry that site's own public browser keys) lists those folders in
+`tool.json` `secretsIgnore`, as patterns like `sites/*/_source/**`. Each run
+says how many files it skipped. Never list a folder where the tool's own
+settings or credentials could land.
+
 ### 10. Runtime pinned
 
 A `node` tool sets `engines.node` in `package.json` (**checked**) and has a
