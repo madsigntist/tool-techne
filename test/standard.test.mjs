@@ -344,11 +344,78 @@ test('release ZIP: one tool-techne/ folder, and a tool made from the unzipped co
   assert.doesNotMatch(all.stdout, /(OK|FAIL) {2}tool-techne\b/, '--all leaves tool-techne itself out');
 });
 
+/**
+ * @return {boolean} Whether this computer has Python 3.
+ */
+function hasPython() {
+  return [['python'], ['python3'], ['py', '-3']].some(([c, ...a]) => {
+    const r = spawnSync(c, [...a, '--version'], {encoding: 'utf8'});
+    return r.status === 0 && /^Python 3\./.test(`${r.stdout}${r.stderr}`.trim());
+  });
+}
+
+test('a python tool meets the standard and passes its own check', {skip: !hasPython() && 'no Python 3 here'}, () => {
+  const root = parentFolder();
+  const t = scaffold(root, ['--name', 'receipt-sorter', '--profile', 'cli', '--stack', 'python',
+    '--purpose', 'Sorts "receipts" into <folders> \\ by month']);
+  assert.equal(t.status, 0, t.out);
+  const r = checkTool(t.dir);
+  assert.deepEqual(r.fails, []);
+  assert.deepEqual(r.warns, []);
+  assert.equal(r.manifest.purpose, 'Sorts \'receipts\' into folders  by month', 'quotes, brackets and backslashes made safe');
+  assert.match(fs.readFileSync(path.join(t.dir, '.python-version'), 'utf8'), /^3\.\d+\n$/, 'version filled in');
+  assert.ok(!fs.existsSync(path.join(t.dir, 'package.json')));
+  assert.match(fs.readFileSync(path.join(t.dir, '.gitignore'), 'utf8'), /^__pycache__\/$/m, '.gitignore.append applied');
+  const check = runIn(t.dir, 'scripts/check.mjs');
+  assert.equal(check.status, 0, check.out);
+  assert.match(check.out, /OK +Tests \(.*-m unittest/);
+
+  // Missing requires-python fails.
+  fs.writeFileSync(path.join(t.dir, 'pyproject.toml'), '[project]\nname = "x"\n');
+  assert.ok(hasFail(checkTool(t.dir), /requires-python is not set/));
+});
+
+test('pre-commit hook: a commit with a secret is stopped, with any AI or none', () => {
+  const root = parentFolder();
+  const t = scaffold(root, ['--name', 'demo-hook', '--profile', 'page']);
+  assert.equal(t.status, 0, t.out);
+  const git = (...a) => spawnSync('git', a, {cwd: t.dir, encoding: 'utf8', env: ENV});
+  assert.equal(git('config', '--get', 'core.hooksPath').stdout.trim(), '.githooks');
+
+  const awsKey = ['AKIA', 'ABCDEFGHIJKLMNOP'].join('');
+  fs.writeFileSync(path.join(t.dir, 'leak.js'), `const k = '${awsKey}';\n`);
+  git('add', 'leak.js');
+  const blocked = git('commit', '-m', 'add leak');
+  assert.notEqual(blocked.status, 0, 'the commit went through');
+  assert.match(blocked.stdout + blocked.stderr, /Commit stopped: a check failed/);
+
+  fs.writeFileSync(path.join(t.dir, 'leak.js'), 'const k = process.env.KEY;\n');
+  git('add', 'leak.js');
+  const clean = git('commit', '-m', 'read the key from the environment');
+  assert.equal(clean.status, 0, clean.stdout + clean.stderr);
+
+  // Turned off, the standard check says so.
+  git('config', '--unset', 'core.hooksPath');
+  assert.ok(checkTool(t.dir).warns.some((w) => /pre-commit hook is not turned on/.test(w)));
+});
+
+test('a tools folder inside OneDrive gets a warning', () => {
+  const root = path.join(parentFolder(), 'OneDrive - Example', 'tools');
+  fs.mkdirSync(root, {recursive: true});
+  const t = scaffold(root, ['--name', 'synced-tool', '--profile', 'page']);
+  assert.equal(t.status, 0, t.out);
+  assert.match(t.out, /WARN {2}this folder is inside OneDrive/);
+});
+
 test('panel-core: refuses other hosts and origins, runs one job', async () => {
   const root = parentFolder();
   const t = scaffold(root, ['--name', 'demo-live', '--profile', 'panel', '--prefix', 'dl', '--node', '18']);
   assert.equal(t.status, 0, t.out);
   fs.mkdirSync(path.join(t.dir, 'data', 'acme'), {recursive: true});
+  // A job that would run for a minute, to prove one-at-a-time and Stop.
+  const serverFile = path.join(t.dir, 'gui', 'server.mjs');
+  fs.writeFileSync(serverFile, fs.readFileSync(serverFile, 'utf8')
+    .replace('const ACTIONS = {\n', 'const ACTIONS = {\n  wait: () => [\'-e\', \'setTimeout(() => {}, 60000)\'],\n'));
   const port = 4990 + Math.floor(Math.random() * 9);
   const {spawn} = await import('node:child_process');
   const http = await import('node:http');
@@ -368,6 +435,15 @@ test('panel-core: refuses other hosts and origins, runs one job', async () => {
     assert.equal((await req('POST', '/api/run', {}, JSON.stringify({action: 'status', record: '../x'}))).status, 400);
     const ok = await req('POST', '/api/run', {}, JSON.stringify({action: 'status', record: 'acme'}));
     assert.match(ok.body, /acme: 0 file\(s\)[\s\S]*\[exit 0/);
+
+    const started = Date.now();
+    const waiting = req('POST', '/api/run', {}, JSON.stringify({action: 'wait'}));
+    await new Promise((r) => setTimeout(r, 500));
+    assert.equal((await req('POST', '/api/run', {}, JSON.stringify({action: 'status'}))).status, 409, 'one job at a time');
+    assert.equal(JSON.parse((await req('POST', '/api/stop')).body).stopped, true);
+    // Windows taskkill /F ends it with code 1; elsewhere SIGTERM ends it with no code.
+    assert.match((await waiting).body, /\[exit (stopped|1),/);
+    assert.ok(Date.now() - started < 15_000, 'Stop ended the job, not its own timer');
   } finally {
     await req('POST', '/api/shutdown');
     server.kill();

@@ -46,6 +46,9 @@ The person may be new to code. Unless they ask for more detail:
 - **Commit after each change that works**, with a one-line message saying
   what changed. Explain to the person that a commit is a saved point they
   can go back to.
+- **A pre-commit hook checks every commit** for secrets and a stale defect
+  register. If it stops a commit, fix what it reports. Never use
+  `--no-verify` to get past it unless the person decides to, knowing why.
 - **Workflows live in `guides/`**, as plain Markdown any AI can follow. A
   slash command in `commands/` is a short file that says which guide to
   follow. Its name starts with `{{PREFIX}}-`.

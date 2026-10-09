@@ -30,8 +30,13 @@ command in these documents uses that name.
 
 ## What you need
 
-- **Node.js** 18 or newer: https://nodejs.org (choose LTS)
+- **Node.js** 22 or newer: https://nodejs.org (choose LTS)
 - **git**: https://git-scm.com/downloads
+- **Python** 3.10 or newer, only for a tool written in Python:
+  https://www.python.org/downloads/
+
+On a work computer, your IT team may need to install these. Keep your tools
+folder somewhere OneDrive does not sync, like `C:\tools`.
 - **An AI assistant.** Any of these works: Claude Code, GitHub Copilot,
   Cursor, Codex, Gemini CLI, or a browser chat like ChatGPT or Claude.
 
@@ -55,10 +60,12 @@ A tool can be:
 | --- | --- | --- |
 | page | A page you open in your browser | HTML, CSS and JavaScript. Nothing to install |
 | panel | A dashboard on your computer with buttons that run tasks | Node.js |
-| cli | Commands you type in a terminal | Node.js |
-| app | A service that runs all the time | Node.js |
+| cli | Commands you type in a terminal | Node.js or Python |
+| app | A service that runs all the time | Node.js or Python |
 
-Python is next. See [ROADMAP.md](ROADMAP.md).
+Every commit in every tool is checked first, whichever AI made it, or
+none: a git hook stops a commit that would save a password or key.
+tool-techne itself is tested on Windows, macOS and Linux on every change.
 
 ## Updating
 

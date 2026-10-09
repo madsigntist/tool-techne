@@ -21,6 +21,8 @@ dependencies.
 | `scripts/release.mjs` | Builds the release ZIP, verifies an unzipped copy, and with `--publish` tags and creates the GitHub release |
 | `scripts/lib/zip.mjs` | Reads a ZIP with Node's zlib, so verifying a release needs no unzip program |
 | `test/standard.test.mjs` | Scaffolds real tools into a temp folder and breaks them one part at a time |
+| `.githooks/pre-commit` | Runs `check.mjs --quick` before each commit. The same file is in `skeleton/core/` for every tool |
+| `.github/workflows/check.yml` | CI: the full check on Windows, macOS and Linux, Node.js 22 and 24, Python 3.12 |
 | `commands/`, `.github/prompts/` | The `/new-tool` wrappers for Claude Code and Copilot. Both say "follow START-HERE.md" |
 
 tool-techne carries its own copies of the required kit modules in
@@ -46,8 +48,10 @@ it, never tool-techne.
    `docs.security` into `tool.json`.
 4. Copy the kit modules.
 5. If the parent folder is a git repo, add the tool to its `.gitignore`.
-6. Install the commands, `git init`, first commit. A missing git identity
-   is reported with the exact fix, and the scaffold is kept.
+6. `git init`, then `install.mjs` (commands, and `core.hooksPath` for the
+   pre-commit hook, which needs the repo to exist), then the first commit,
+   which the hook checks. A missing git identity is reported with the exact
+   fix, and the scaffold is kept.
 7. Run the standard check on the result.
 
 ## Tokens
@@ -61,7 +65,13 @@ it, never tool-techne.
 | `STACK`, `STACK_LABEL` | `--stack` or the profile's default, and its label from `STACKS` |
 | `PREFIX` | `--prefix`, or the name's initials |
 | `PORT`, `PORT_ENV` | next free from 4870 (panel) or 4900 (app), `null` otherwise |
-| `NODE` | `--node`, or the running Node.js major version |
+| `NODE` | `--node`, or `NODE_FLOOR` (22) |
+| `PYTHON_FLOOR`, `PYTHON_VERSION` | 3.10, and the major.minor of the Python found when scaffolding a `python` tool |
+| `STACK_NEEDS` | An extra line for the README's "What you need", per stack |
+
+Text the person typed (`TITLE`, `PURPOSE`) is cleaned before it is filled
+in: one line, double quotes made single, no backslashes or angle brackets.
+It lands inside quoted strings in JSON, TOML, Python and HTML.
 | `SHARED`, `DATE` | `--shared`, today |
 
 ## What the check reads

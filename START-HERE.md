@@ -11,12 +11,14 @@ helps you build it.
 
 1. **Get tool-techne**: download `tool-techne.zip` from the Releases page
    of the tool-techne GitHub repo, and unzip it where you will keep your
-   tools. If your folder is called `tool-techne-main`, rename it to
-   `tool-techne`.
+   tools. Pick a place OneDrive does not sync, like `C:\tools` on Windows:
+   OneDrive and git fight over the same files. If your folder is called
+   `tool-techne-main`, rename it to `tool-techne`.
 2. **Install two free programs**, if you do not have them yet:
    - **Node.js**: https://nodejs.org. Choose the LTS version.
    - **git**: https://git-scm.com/downloads
-   Your AI assistant can walk you through either one. Ask it.
+   Your AI assistant can walk you through either one. Ask it. On a work
+   computer you may need your IT team to install them.
 3. **Open the `tool-techne` folder in your AI assistant.** In VS Code or
    Cursor: File, then Open Folder. In Claude Code: run `claude` in a
    terminal from inside the folder.
@@ -82,6 +84,10 @@ it is anything else, walk them through renaming it: close the folder in
 their editor first, rename it in File Explorer or Finder, then open it
 again.
 
+If the folder's path contains `OneDrive`, recommend moving it first, to a
+place like `C:\tools`. OneDrive syncing a git folder causes locked files
+and conflicting copies.
+
 Run (or ask them to run):
 
 ```
@@ -90,12 +96,15 @@ git --version
 git config user.email
 ```
 
-- `node` must print v18 or higher. If it is missing or older, walk them
+- `node` must print v22 or higher. If it is missing or older, walk them
   through installing the LTS version from https://nodejs.org, one screen at
   a time. They must open a new terminal afterward.
 - `git` must print a version. If not, walk them through
   https://git-scm.com/downloads. On Windows, the default for every
   installer screen is fine.
+- An installer that asks for an administrator password they do not have:
+  on a work computer, their IT team installs it. Stop here until it is
+  done.
 - If `git config user.email` prints nothing, ask for the name and email
   they want on their work, then run:
   ```
@@ -130,7 +139,10 @@ If they chose **show me the options**, also ask:
 4. **A short name** for the folder: lowercase, words joined with hyphens,
    like `plant-tracker`.
 5. **A 2 or 3 letter code** for its AI commands, like `pt`.
-6. If they will share it: **should the tool's own files be locked**, so an
+6. For b, c or d: **which language?** JavaScript (Node.js), Python, or
+   "you choose". Python suits people who know it already, or tools that
+   work with data and files. Panels are JavaScript only.
+7. If they will share it: **should the tool's own files be locked**, so an
    AI cannot change the tool itself while fixing one piece of data? This
    lock only works in Claude Code.
 
@@ -142,8 +154,8 @@ Turn their answers into settings with this table:
 | --- | --- | --- |
 | a. a page in the browser | `page` | `static` (no install needed) |
 | b. a dashboard with buttons | `panel` | `node` |
-| c. commands in a terminal | `cli` | `node` |
-| d. runs all the time | `app` | `node` |
+| c. commands in a terminal | `cli` | `node`, or `python` if they chose it |
+| d. runs all the time | `app` | `node`, or `python` if they chose it |
 
 - Someone else will use it: add `--shared`. If they said yes to locking,
   add `--guard` too.
@@ -155,9 +167,16 @@ Turn their answers into settings with this table:
 **Not sure between a and c?** Recommend **a**. A page needs nothing
 installed and anyone can open it.
 
-**They want a language tool-techne has no stack for yet** (Python, Go and
+**Python**: before Step 6, run `python --version` (on a Mac,
+`python3 --version`). It must print Python 3.10 or higher. If not, walk
+them through https://www.python.org/downloads/. On Windows, the first
+installer screen has a box "Add python.exe to PATH": it must be ticked.
+On Windows, "Python was not found... Microsoft Store" means it is not
+installed: that message comes from a placeholder, not Python.
+
+**They want a language tool-techne has no stack for** (Go, Ruby and
 others)? Say so plainly. Offer the nearest stack, or `--profile cli` with
-`--stack node` as a starting shell they replace later. Python is planned.
+`--stack node` as a starting shell they replace later.
 
 Show the choices back to them as a short list, in plain words, and ask for
 a yes. For example:

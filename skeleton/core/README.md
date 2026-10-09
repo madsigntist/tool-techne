@@ -8,8 +8,9 @@
 
 ## What you need
 
-- Node.js 18 or newer: https://nodejs.org
+- Node.js 22 or newer: https://nodejs.org (choose LTS)
 - git: https://git-scm.com/downloads
+{{STACK_NEEDS}}
 
 ## Set it up
 

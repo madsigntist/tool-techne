@@ -34,7 +34,12 @@ export const PROFILES = {
 export const STACKS = {
   static: {profiles: ['page'], test: 'node --test', label: 'HTML, CSS and JavaScript, nothing to install'},
   node: {profiles: ['cli', 'panel', 'app'], test: 'node --test', label: 'Node.js'},
+  python: {profiles: ['cli', 'app'], test: '{python} -m unittest discover -s tests -t .', label: 'Python'},
 };
+
+/** The oldest Node.js tools are made for, and the oldest Python. */
+export const NODE_FLOOR = 22;
+export const PYTHON_FLOOR = '3.10';
 
 /**
  * @param {string} profile A profile.
@@ -243,6 +248,20 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
   if (m.stack === 'node') {
     if (!(pkg && pkg.engines && pkg.engines.node)) fails.push('package.json: engines.node is not set');
     if (!fs.existsSync(path.join(dir, '.nvmrc'))) warns.push('no .nvmrc');
+  }
+  if (m.stack === 'python') {
+    if (!/requires-python\s*=/.test(readText(path.join(dir, 'pyproject.toml')))) {
+      fails.push('pyproject.toml: requires-python is not set');
+    }
+    if (!fs.existsSync(path.join(dir, '.python-version'))) warns.push('no .python-version');
+  }
+
+  // The pre-commit hook runs the quick check with any AI, or none.
+  if (!readText(path.join(dir, '.githooks', 'pre-commit')).includes('check.mjs')) {
+    warns.push('no .githooks/pre-commit running scripts/check.mjs: commits are not checked unless someone remembers');
+  } else if (fs.existsSync(path.join(dir, '.git'))) {
+    const hp = spawnSync('git', ['config', '--get', 'core.hooksPath'], {cwd: dir, encoding: 'utf8'}).stdout.trim();
+    if (hp !== '.githooks') warns.push('the pre-commit hook is not turned on here: run node scripts/install.mjs');
   }
   if (!JSON.stringify(hooks.SessionStart || []).match(/setup-check|install\.mjs/)) {
     warns.push('no SessionStart setup check: a cold copy will not say what is missing');

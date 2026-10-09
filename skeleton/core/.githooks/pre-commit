@@ -1,0 +1,10 @@
+#!/bin/sh
+# Runs before every commit, whichever AI made it, or none: the defect
+# register is current, and no password or key is about to be saved.
+# Turned on by: node scripts/install.mjs
+# Skip it once, only if you are sure: git commit --no-verify
+node scripts/check.mjs --quick || {
+  echo ""
+  echo "Commit stopped: a check failed. Read the lines marked FAIL above."
+  exit 1
+}

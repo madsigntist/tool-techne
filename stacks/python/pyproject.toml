@@ -1,0 +1,5 @@
+[project]
+name = "{{NAME}}"
+version = "0.1.0"
+description = "{{PURPOSE}}"
+requires-python = ">={{PYTHON_FLOOR}}"

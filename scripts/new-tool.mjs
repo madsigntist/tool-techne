@@ -8,7 +8,7 @@
  *
  * Usage:
  *   node scripts/new-tool.mjs --name <kebab-name> --profile page|cli|panel|app
- *       [--stack static|node] [--title "Human name"] [--purpose "One sentence."]
+ *       [--stack static|node|python] [--title "Human name"] [--purpose "One sentence."]
  *       [--prefix xx] [--shared] [--guard] [--node 22] [--root <folder>]
  *       [--dry-run]
  */
@@ -17,7 +17,8 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {
-  APP_PORT_START, KIT, KIT_DIR, KIT_REQUIRED, PANEL_PORT_START, PROFILES, STACKS, STANDARD,
+  APP_PORT_START, KIT, KIT_DIR, KIT_REQUIRED, NODE_FLOOR, PANEL_PORT_START, PROFILES, PYTHON_FLOOR,
+  STACKS, STANDARD,
   checkTool, defaultStack, discover, nextPort, readManifest,
 } from './lib/standard.mjs';
 
@@ -60,13 +61,43 @@ const root = path.resolve(opt('root') || path.dirname(HERE));
 const dest = path.join(root, name);
 if (fs.existsSync(dest)) die(`${dest} already exists. Pick another name.`);
 
-const title = opt('title') || name.split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+/**
+ * Makes text safe inside a quoted string in JSON, TOML, Python or HTML: one
+ * line, no double quotes, backslashes or angle brackets.
+ * @param {string} t Text the person typed.
+ * @return {string} It, safe.
+ */
+const clean = (t) => t.replace(/[\r\n]+/g, ' ').replace(/"/g, '\'').replace(/[\\<>]/g, '').trim();
+
+const title = clean(opt('title') || name.split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join(' '));
 const chosenPrefix = opt('prefix');
 let prefix = chosenPrefix || name.split('-').map((w) => w[0]).join('').slice(0, 3);
 if (!/^[a-z][a-z0-9]{0,5}$/.test(prefix)) die('--prefix: 1 to 6 lowercase letters or digits.');
 const shared = argv.includes('--shared');
 const guard = argv.includes('--guard');
 const dry = argv.includes('--dry-run');
+
+/**
+ * @return {?{cmd: !Array<string>, version: string}} Python 3 here, found by
+ *     running it: on Windows, python3 is often a Microsoft Store placeholder.
+ */
+function findPython() {
+  for (const cmd of [['python'], ['python3'], ['py', '-3']]) {
+    const r = spawnSync(cmd[0], [...cmd.slice(1), '--version'], {encoding: 'utf8'});
+    const m = /^Python (3\.\d+)\.\d+/.exec(`${r.stdout || ''}${r.stderr || ''}`.trim());
+    if (r.status === 0 && m) return {cmd, version: m[1]};
+  }
+  return null;
+}
+const minor = (v) => Number(v.split('.')[1]);
+const python = stack === 'python' ? findPython() : null;
+if (stack === 'python' && !python) {
+  die(`Python 3 is not installed. Get ${PYTHON_FLOOR} or newer from https://www.python.org/downloads/ ` +
+    '(on Windows, tick "Add python.exe to PATH"), open a new terminal, and run this again.');
+}
+if (python && minor(python.version) < minor(PYTHON_FLOOR)) {
+  die(`Python ${python.version} is too old. Install ${PYTHON_FLOOR} or newer from https://www.python.org/downloads/`);
+}
 
 if (spawnSync('git', ['--version']).status !== 0) {
   die('git is not installed. Get it from https://git-scm.com/downloads, open a new terminal, and run this again.');
@@ -97,7 +128,7 @@ const portEnv = port ? `${prefix.toUpperCase()}_PORT` : '';
 const TOKENS = {
   NAME: name,
   TITLE: title,
-  PURPOSE: opt('purpose') || `[One sentence: what ${title} does and for whom.]`,
+  PURPOSE: clean(opt('purpose') || `[One sentence: what ${title} does and for whom.]`),
   PROFILE: profile,
   PROFILE_LABEL: PROFILES[profile],
   STACK: stack,
@@ -106,7 +137,10 @@ const TOKENS = {
   PORT: port === null ? 'null' : String(port),
   PORT_ENV: portEnv,
   PREFIX: prefix,
-  NODE: opt('node') || process.versions.node.split('.')[0],
+  NODE: opt('node') || String(NODE_FLOOR),
+  PYTHON_FLOOR,
+  PYTHON_VERSION: python ? python.version : PYTHON_FLOOR,
+  STACK_NEEDS: stack === 'python' ? `- Python ${PYTHON_FLOOR} or newer: https://www.python.org/downloads/` : '',
   DATE: new Date().toISOString().slice(0, 10),
 };
 
@@ -117,7 +151,7 @@ const TOKENS = {
 const fill = (s) => s.replace(/\{\{([A-Z_]+)\}\}/g, (m, k) => (k in TOKENS ? TOKENS[k] : m));
 
 const SKIP = new Set(['package.scripts.json', 'settings.hooks.json']);
-const TEXT = /\.(md|mjs|cjs|js|json|html|css|txt|example|append|py|toml)$|^\.[a-z]+$/;
+const TEXT = /\.(md|mjs|cjs|js|json|html|css|txt|example|append|py|toml)$|^\.[a-z-]+$|^pre-commit$/;
 
 /**
  * Copies a folder into dest, filling tokens in names and text files. A file
@@ -169,6 +203,11 @@ function run(label, cmd, args) {
 console.log(`\n  New tool: ${title} (${name})`);
 console.log(`  ${PROFILES[profile]}, written in ${STACKS[stack].label}`);
 console.log(`  command prefix ${prefix}-, port ${port ?? 'none'}\n`);
+if (/onedrive/i.test(dest)) {
+  console.log('  WARN  this folder is inside OneDrive. OneDrive and git fight over the same');
+  console.log('        files, which causes locked files and conflicting copies. Move your');
+  console.log('        tools folder somewhere OneDrive does not sync, like C:\\tools.\n');
+}
 
 const layers = [path.join(HERE, 'skeleton', 'core'), path.join(HERE, 'stacks', stack)];
 if (fs.existsSync(path.join(HERE, 'profiles', profile))) layers.push(path.join(HERE, 'profiles', profile));
@@ -243,8 +282,10 @@ if (fs.existsSync(path.join(root, '.git'))) {
   }
 }
 
-run('slash commands installed', process.execPath, ['scripts/install.mjs']);
+const hook = path.join(dest, '.githooks', 'pre-commit');
+if (fs.existsSync(hook)) fs.chmodSync(hook, 0o755);
 run('git init', 'git', ['init', '-q', '-b', 'main']);
+run('setup: commands and the pre-commit hook', process.execPath, ['scripts/install.mjs']);
 const who = spawnSync('git', ['config', 'user.email'], {cwd: dest, encoding: 'utf8'}).stdout.trim();
 let committed = false;
 if (!who) {

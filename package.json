@@ -7,7 +7,7 @@
   "license": "MIT",
   "author": "Michael Kelly",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "scripts": {
     "new-tool": "node scripts/new-tool.mjs",

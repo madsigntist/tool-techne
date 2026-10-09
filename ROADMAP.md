@@ -2,9 +2,9 @@
 
 ## Start here (next session)
 
-Phase 1 is built and released: a public, AI-neutral starter with `static`
-and `node` stacks, a guided start, a secrets gate, and a release script.
-Phase 2 is next.
+v1.1.0 adds the Python stack, the pre-commit hook, and CI on Windows,
+macOS and Linux. What is left from phase 2 is testing the walkthrough on
+assistants other than Claude, which needs a person with those accounts.
 
 ## Decisions (settled, do not reopen)
 
@@ -41,25 +41,29 @@ Phase 2 is next.
 - 2026-10-09: **Repo structure stays flat.** Nesting everything in a
   `tool-techne/` subfolder would fix the green button's ZIP but break
   clones and hide the README.
+- 2026-10-09: **Python tests use `unittest`, not pytest.** It ships with
+  Python, so a new Python tool installs nothing. A tool that wants pytest
+  adds it to `requirements.txt` and changes its `test`.
+- 2026-10-09: **Python is found by running it**, through `{python}` in the
+  test command. On Windows `python3` is often a Store placeholder.
+- 2026-10-09: **The pre-commit hook runs the quick check only** (register
+  and secrets). The full check runs tests, which would make every commit
+  slow enough that people skip the hook.
+- 2026-10-09: **Node.js 22 is the floor.** 18 and 20 are past end of life,
+  and CI runs 22 on every change, so the stated floor is the tested one.
+- 2026-10-09: **No panel in Python.** `panel-core` is the security-critical
+  half of a panel, and one copy is easier to keep right than two.
 
-## Next (phase 2)
+## Next
 
-- **Python stack**: `stacks/python/` with `pyproject.toml`,
-  `.python-version`, a starter test, `test: python -m pytest`, profiles
-  `cli` and `app`.
-- **git pre-commit hook** that runs `node scripts/check.mjs`, so the
-  checks run with every assistant and with none. `install.mjs` sets
-  `core.hooksPath`.
-- **CI**: a GitHub Actions matrix (Windows, macOS, Linux) running
-  `node scripts/check.mjs`, plus a scaffold of each stack and profile.
-- **Walkthrough tested on three assistants**: Claude Code, GitHub Copilot,
-  and a browser chat. Record what each got wrong in the register.
+- **Walkthrough tested on other assistants**: GitHub Copilot, Gemini CLI,
+  and a browser chat (ChatGPT or Claude on the web). Record what each got
+  wrong in the register.
 
 ## Known gaps
 
-- Tested on Windows only. The panel's Stop uses `taskkill` there and
-  process groups elsewhere; the second path has not run here.
 - The `app` profile has no scaffold beyond empty `core/`, `modules/` and
   `deploy/`.
-- The guard and the setup hook are Claude Code only.
+- The guard and the setup hook are Claude Code only. The pre-commit hook
+  covers secrets for every assistant.
 - The pointer files' effect in Gemini CLI and Copilot is not yet verified.

@@ -1,0 +1,4 @@
+# Packages this tool needs, one per line, like:
+#   requests==2.32.3
+# node scripts/install.mjs installs them into .venv/ the first time one is
+# listed here. Leave it empty while the tool needs only Python itself.

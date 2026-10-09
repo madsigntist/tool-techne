@@ -43,6 +43,8 @@ of. The code they fixed came with it.
 | 1.2 | The empty register in every new tool would have counted its own example row as a defect, failing the tool's first check | The register lint counts any line that starts like a numbered row, including one inside an HTML comment | The example row is indented. Every scaffold test runs the new tool's full check, register lint included, so a template register that miscounts fails tool-techne's check | GATE | self-review | no |
 | 1.3 | The private template's scaffolder read the register starter from a script in the author's home folder, so on anyone else's computer every new tool had no register | A dependency on one machine's setup, invisible on that machine | The register starter is a skeleton file. Every test scaffolds with the home folder pointed at an empty one and its own git identity, so a file outside tool-techne is missing in the tests too. Positive-controlled: the old home-folder read, put back, fails every scaffold test | GATE | self-review | no |
 | 1.4 | A second tool whose name had the same initials as the first (plant-tracker, photo-tidy) could not be made without knowing to pass --prefix | The scaffolder refused a taken prefix even when it had made the prefix up itself | A made-up prefix gets a number until it is free (pt2). Only a prefix the person chose stops the scaffold. Tested both ways in `test/standard.test.mjs` | GATE | self-review | no |
+| 1.5 | A double quote in a tool's description stopped the scaffold: tool.json could not be read | The description was placed inside quoted strings in JSON, HTML and later TOML and Python, as typed | Typed text is cleaned first: one line, double quotes made single, no backslashes or angle brackets. The Python scaffold test uses a description with all of them | GATE | self-review | no |
+| 1.6 | A Python tool's `.python-version` would have kept its placeholder instead of the version | The list of files whose placeholders get filled matched dotfile names of letters only, and this one has a hyphen | The pattern allows hyphens. The Python scaffold test checks the file holds a real version | GATE | self-review | no |
 
 ## 2. Drift between tools
 
@@ -56,6 +58,7 @@ of. The code they fixed came with it.
 | # | Problem | Root cause | Fix | Tag | Found by | Again? |
 | --- | --- | --- | --- | --- | --- | --- |
 | 3.1 | A copy of tool-techne from a ZIP would have failed its own check, and the Claude startup hook would have reported it failing every session | A ZIP has no .git folder, and tool-techne checked itself with the rule that every tool is its own git repo, including from `check-standard --all` | tool-techne's own test leaves out the git rule for itself, and `--all` checks only the tools beside it. `release.mjs` unzips every release and runs the full check in the copy before anything is published, and a test does the same from the last commit | GATE | self-review | no |
+| 3.2 | The docs said Node.js 18 or newer, and it had only ever run on 24. New tools also required whatever version made them, so a tool made on 24 refused to set up on 22 | The supported version was a claim nothing tested, and the scaffolder used the running version instead of a floor | The floor is 22, set in one place (`NODE_FLOOR`) and used for new tools. CI runs the full check on 22 on every change | GATE | self-review | no |
 
 ---
 
@@ -73,6 +76,6 @@ Every row marked **Again?** = yes, and what that says about its tag.
 
 | | |
 | --- | --- |
-| Defects recorded | 7 |
-| Fixed by a gate or a generator | 7 |
+| Defects recorded | 10 |
+| Fixed by a gate or a generator | 10 |
 | Defect classes that recurred | 0 |

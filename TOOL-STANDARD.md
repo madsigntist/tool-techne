@@ -33,7 +33,7 @@ path is written down.
   "title": "Human name",
   "purpose": "One sentence: what it does and for whom.",
   "profile": "page | panel | cli | app",
-  "stack": "static | node",
+  "stack": "static | node | python",
   "shared": false,
   "port": 4870,
   "portEnv": "XX_PORT",
@@ -144,7 +144,13 @@ fails when its counts are wrong, and a Claude Code Stop hook runs it.
 ### 8. One check command
 
 `node scripts/check.mjs` runs every gate: the register lint, the secrets
-scan, and the tool's `test` command. Run it before every commit.
+scan, and the tool's `test` command. `--quick` runs only the first two.
+
+**A pre-commit hook runs the quick check before every commit**:
+`.githooks/pre-commit`, turned on by `scripts/install.mjs` (git does not
+carry that setting with a folder, so setup sets it). It works with every AI
+assistant and with none, which Claude Code hooks do not. A missing hook, or
+one not turned on, is reported. **Checked (warning).**
 
 - **Prefer a gate to a rule.** A rule needs someone to remember it. A gate
   does not.
@@ -161,8 +167,14 @@ real key. **Checked**, by the tool's own check.
 ### 10. Runtime pinned
 
 A `node` tool sets `engines.node` in `package.json` (**checked**) and has a
-matching `.nvmrc` (**checked, warning**). A `static` tool runs in any
-browser and pins nothing.
+matching `.nvmrc` (**checked, warning**). New tools start at Node.js 22,
+the oldest version tool-techne is tested on.
+
+A `python` tool sets `requires-python` in `pyproject.toml` (**checked**)
+and has a `.python-version` (**checked, warning**). New tools start at
+Python 3.10.
+
+A `static` tool runs in any browser and pins nothing.
 
 ### 11. Setup that explains itself
 
@@ -210,11 +222,11 @@ Stack `node`.
 
 ### cli: commands you type
 
-Stack `node`. No port.
+Stack `node` or `python`. No port.
 
 ### app: a service that runs all the time
 
-Stack `node`. Starts with `core/`, `modules/` and `deploy/`. Modules never
+Stack `node` or `python`. Starts with `core/`, `modules/` and `deploy/`. Modules never
 import each other. Port: the next free one from 4900 up.
 
 ## Stacks
@@ -223,6 +235,14 @@ import each other. Port: the next free one from 4900 up.
 | --- | --- | --- |
 | `static` | page | `node --test` |
 | `node` | cli, panel, app | `node --test` |
+| `python` | cli, app | `{python} -m unittest discover -s tests -t .` |
+
+In a `test` command, `{python}` becomes this computer's Python 3: the one in
+the tool's `.venv/` if it has one, otherwise `python`, `python3` or
+`py -3`, whichever runs and reports Python 3. On Windows `python3` is often
+a Microsoft Store placeholder, so a name alone is not trusted. Python tests
+use the standard library's `unittest`, so a new tool installs nothing.
+Packages go in `requirements.txt`, and `install.mjs` puts them in `.venv/`.
 
 A stack is a folder in `stacks/` plus an entry in `STACKS` in
 `scripts/lib/standard.mjs`. A file in a stack ending `.append` is added to

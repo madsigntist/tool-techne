@@ -1,6 +1,7 @@
 /**
- * Sets this tool up: checks Node.js and git, installs dependencies, copies
- * the slash commands. One command, no questions, safe to re-run.
+ * Sets this tool up: checks Node.js, git and (for a Python tool) Python,
+ * installs dependencies, turns on the git pre-commit hook, copies the slash
+ * commands. One command, no questions, safe to re-run.
  *
  * TOOL-KIT MODULE "install". The source is tool-techne/kit/. Never edit a
  * tool's copy: edit the source, then run
@@ -59,13 +60,27 @@ function atLeast(a, b) {
 
 console.log(`\n  ${manifest.title}: setup\n`);
 
-const need = String(pkg.engines?.node || '18').replace(/^>=\s*/, '');
+const need = String(pkg.engines?.node || '22').replace(/^>=\s*/, '');
 step(atLeast(process.versions.node, need), `Node.js ${process.versions.node} (needs ${need} or newer)`,
     `Install Node.js ${need} or newer from https://nodejs.org (the LTS button).`);
 
 const git = spawnSync('git', ['--version'], {encoding: 'utf8'});
 step(git.status === 0, git.status === 0 ? git.stdout.trim() : 'git',
     'Install git from https://git-scm.com/downloads, then open a new terminal.');
+
+if (manifest.stack === 'python') pythonSteps();
+
+// The pre-commit hook runs the quick check before every commit, whichever
+// AI is used, or none. git does not copy this setting with the folder, so
+// it is set here.
+if (fs.existsSync(path.join(ROOT, '.git')) && fs.existsSync(path.join(ROOT, '.githooks', 'pre-commit'))) {
+  const cur = spawnSync('git', ['config', '--get', 'core.hooksPath'], {cwd: ROOT, encoding: 'utf8'}).stdout.trim();
+  if (cur !== '.githooks' && !CHECK) {
+    spawnSync('git', ['config', 'core.hooksPath', '.githooks'], {cwd: ROOT});
+  }
+  step(CHECK ? cur === '.githooks' : true, 'git pre-commit hook on (runs the quick check before each commit)',
+      'Run: node scripts/install.mjs');
+}
 
 const deps = Object.keys({...pkg.dependencies, ...pkg.devDependencies});
 if (deps.length) {
@@ -82,6 +97,52 @@ if (deps.length) {
     }
     step(ok, 'Dependencies installed', 'npm install failed. Read the output above.');
   }
+}
+
+/**
+ * Python 3 at the version pyproject.toml asks for, and the packages in
+ * requirements.txt installed into .venv/ (only when it lists any).
+ * @return {void}
+ */
+function pythonSteps() {
+  const venvPy = process.platform === 'win32'
+    ? path.join(ROOT, '.venv', 'Scripts', 'python.exe')
+    : path.join(ROOT, '.venv', 'bin', 'python');
+  let py = null;
+  let ver = '';
+  // python3 is tried by running it: on Windows it is often a Microsoft
+  // Store placeholder that is not Python.
+  for (const [cmd, ...pre] of [['python'], ['python3'], ['py', '-3']]) {
+    const r = spawnSync(cmd, [...pre, '--version'], {encoding: 'utf8'});
+    const m = /^Python (3\.\d+\.\d+)/.exec(`${r.stdout || ''}${r.stderr || ''}`.trim());
+    if (r.status === 0 && m) {
+      py = [cmd, ...pre];
+      ver = m[1];
+      break;
+    }
+  }
+  let pyNeed = '3.10';
+  try {
+    pyNeed = /requires-python\s*=\s*">=\s*([\d.]+)"/.exec(fs.readFileSync(path.join(ROOT, 'pyproject.toml'), 'utf8'))?.[1] || pyNeed;
+  } catch {
+    /* default */
+  }
+  step(Boolean(py) && atLeast(ver, pyNeed), py ? `Python ${ver} (needs ${pyNeed} or newer)` : 'Python 3',
+      `Install Python ${pyNeed} or newer from https://www.python.org/downloads/ (on Windows, tick "Add python.exe to PATH").`);
+  if (!py) return;
+
+  const reqFile = path.join(ROOT, 'requirements.txt');
+  const reqs = fs.existsSync(reqFile)
+    ? fs.readFileSync(reqFile, 'utf8').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'))
+    : [];
+  if (!reqs.length) return;
+  if (CHECK) {
+    step(fs.existsSync(venvPy), `${reqs.length} Python package(s) in .venv/`, 'Run: node scripts/install.mjs');
+    return;
+  }
+  if (!fs.existsSync(venvPy)) spawnSync(py[0], [...py.slice(1), '-m', 'venv', '.venv'], {cwd: ROOT, stdio: 'inherit'});
+  const pip = spawnSync(venvPy, ['-m', 'pip', 'install', '-q', '-r', 'requirements.txt'], {cwd: ROOT, stdio: 'inherit'});
+  step(pip.status === 0, `${reqs.length} Python package(s) installed in .venv/`, 'pip install failed. Read the output above.');
 }
 
 // Slash commands: commands/ is the source, every other copy is installed.

@@ -20,12 +20,17 @@ Not sure? Start with `page`. You can make a second tool later.
 | Stack | Profiles | Needs |
 | --- | --- | --- |
 | `static` | page | A browser. Node.js only for the checks |
-| `node` | panel, cli, app | Node.js |
+| `node` | panel, cli, app | Node.js 22 or newer |
+| `python` | cli, app | Python 3.10 or newer, and Node.js for the checks |
 
-Python is planned. A tool in another language is possible today: start a
-`cli` tool in `node` and replace the code, keeping the documents and
-checks. Its `tool.json` `test` field then holds that language's test
-command.
+A Python tool starts with `main.py` and tests written with Python's own
+`unittest`, so nothing extra is installed. Packages it needs go in
+`requirements.txt`, and `node scripts/install.mjs` installs them into a
+`.venv` folder that belongs to that tool alone.
+
+A tool in another language is possible today: start a `cli` tool and
+replace the code, keeping the documents and checks. Its `tool.json` `test`
+field then holds that language's test command.
 
 ## Sharing a tool
 
@@ -50,6 +55,10 @@ works in Claude Code.
 - **A defect register**, for what broke and why.
 - **One check command**, `node scripts/check.mjs`: the register is
   current, no secrets are about to be committed, and the tests pass.
+- **A pre-commit hook**: before every commit, git runs the quick half of
+  the check (register and secrets, a second or two). It works with every
+  AI assistant and with none. To skip it once, when you are sure:
+  `git commit --no-verify`.
 
 ## Claude Code extras
 
@@ -61,8 +70,9 @@ Claude Code runs hooks, and tool-techne adds a few:
 - When you open tool-techne, it checks every tool beside it against the
   standard, and says nothing unless one fails.
 
-Other assistants skip these. Run `node scripts/check.mjs` yourself before
-committing, or ask your assistant to.
+Other assistants skip these. The pre-commit hook still checks every
+commit for secrets. Run the full `node scripts/check.mjs` yourself before
+you share a change, or ask your assistant to.
 
 ## Keeping tools up to date
 

@@ -72,10 +72,22 @@ a port.
 A short code, like `pt`, at the start of each of a tool's AI commands, so
 commands from different tools never clash.
 
+## Pre-commit hook
+
+A script git runs by itself just before saving a commit. In every tool it
+runs the quick check, and stops the commit if a password or key is about to
+be saved.
+
 ## Profile
 
 How a tool is used: a page, a panel, commands (cli) or a service that
 always runs (app).
+
+## Python
+
+A programming language, popular for working with files and data. A tool
+can be written in it (the `python` stack). Python tools keep the packages
+they need in a `.venv` folder of their own.
 
 ## Repository (repo)
 
@@ -97,7 +109,7 @@ slash commands can follow the same guide.
 ## Stack
 
 What a tool is written in: `static` (HTML, CSS and JavaScript in a page,
-nothing to install) or `node` (Node.js).
+nothing to install), `node` (Node.js) or `python` (Python).
 
 ## Standard
 
