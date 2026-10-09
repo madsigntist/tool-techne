@@ -102,7 +102,13 @@ if (/\bnpm run check\b/.test(test) && checkScript === 'check') die('the old chec
 const claudeRel = m.docs?.claude || 'CLAUDE.md';
 if (claudeRel !== 'CLAUDE.md') die(`docs.claude is ${claudeRel}; this script only moves a root CLAUDE.md`);
 if (!fs.existsSync(at('CLAUDE.md'))) die('there is no CLAUDE.md to move');
-if (fs.existsSync(at('AGENTS.md'))) die('AGENTS.md already exists; merge it with CLAUDE.md by hand');
+// A tool that already keeps its rules in AGENTS.md, with CLAUDE.md importing
+// it, is already in the shape the standard asks for: both files stay.
+const alreadyAgents = fs.existsSync(at('AGENTS.md')) &&
+  /^@AGENTS\.md\s*$/m.test(fs.readFileSync(at('CLAUDE.md'), 'utf8'));
+if (fs.existsSync(at('AGENTS.md')) && !alreadyAgents) {
+  die('AGENTS.md already exists and CLAUDE.md does not import it with an "@AGENTS.md" line; merge them by hand');
+}
 
 // Installer.
 const ownInstall = fs.existsSync(at('scripts', 'install.mjs')) &&
@@ -151,18 +157,20 @@ if (DRY) {
 }
 
 // 2. Instructions.
-git('mv', 'CLAUDE.md', 'AGENTS.md');
-const lines = fs.readFileSync(at('AGENTS.md'), 'utf8').split('\n');
-const h1 = lines.findIndex((l) => /^# /.test(l));
-let insertAt = h1 + 1;
-while (insertAt < lines.length && lines[insertAt].trim() === '') insertAt += 1;
-while (insertAt < lines.length && lines[insertAt].trim() !== '' && !/^#/.test(lines[insertAt])) insertAt += 1;
-lines.splice(insertAt, 0, '',
-  'Instructions for any AI assistant working here. `CLAUDE.md`, `GEMINI.md`',
-  'and `.github/copilot-instructions.md` all point to this file, so it is the',
-  'one to change.');
-fs.writeFileSync(at('AGENTS.md'), lines.join('\n'));
-fs.writeFileSync(at('CLAUDE.md'), '@AGENTS.md\n');
+if (!alreadyAgents) {
+  git('mv', 'CLAUDE.md', 'AGENTS.md');
+  const lines = fs.readFileSync(at('AGENTS.md'), 'utf8').split('\n');
+  const h1 = lines.findIndex((l) => /^# /.test(l));
+  let insertAt = h1 + 1;
+  while (insertAt < lines.length && lines[insertAt].trim() === '') insertAt += 1;
+  while (insertAt < lines.length && lines[insertAt].trim() !== '' && !/^#/.test(lines[insertAt])) insertAt += 1;
+  lines.splice(insertAt, 0, '',
+    'Instructions for any AI assistant working here. `CLAUDE.md`, `GEMINI.md`',
+    'and `.github/copilot-instructions.md` all point to this file, so it is the',
+    'one to change.');
+  fs.writeFileSync(at('AGENTS.md'), lines.join('\n'));
+  fs.writeFileSync(at('CLAUDE.md'), '@AGENTS.md\n');
+}
 const title = m.title || m.name;
 if (!fs.existsSync(at('GEMINI.md'))) {
   fs.writeFileSync(at('GEMINI.md'),
@@ -173,7 +181,9 @@ if (!fs.existsSync(at('.github', 'copilot-instructions.md'))) {
   fs.writeFileSync(at('.github', 'copilot-instructions.md'),
     `# ${title}\n\nRead AGENTS.md at the root of this folder and follow it. It holds every\ninstruction for working on this tool.\n`);
 }
-ok('CLAUDE.md moved to AGENTS.md; CLAUDE.md, GEMINI.md and Copilot point there');
+ok(alreadyAgents
+  ? 'AGENTS.md was already the instructions, with CLAUDE.md importing it: both kept; GEMINI.md and Copilot point there'
+  : 'CLAUDE.md moved to AGENTS.md; CLAUDE.md, GEMINI.md and Copilot point there');
 
 // 4. Installer.
 if (ownInstall) {
@@ -243,7 +253,11 @@ std.warns.forEach((w) => console.log(`        warn  ${w}`));
 const mentions = git('grep', '-l', 'CLAUDE\\.md', '--', '.', ':!CLAUDE.md', ':!AGENTS.md', ':!GEMINI.md',
   ':!.github/copilot-instructions.md').stdout.trim().split('\n').filter(Boolean);
 console.log('\n  For you to review:');
-if (mentions.length) {
+if (alreadyAgents && fs.readFileSync(at('CLAUDE.md'), 'utf8').trim() !== '@AGENTS.md') {
+  console.log('  - CLAUDE.md holds more than "@AGENTS.md". Assistants other than Claude never see that part:');
+  console.log('    move anything they also need into AGENTS.md.');
+}
+if (mentions.length && !alreadyAgents) {
   console.log('  - These files mention CLAUDE.md. Where they mean this tool\'s rules, they now live in AGENTS.md:');
   mentions.forEach((f) => console.log(`      ${f}`));
 }
@@ -253,7 +267,9 @@ if (untracked.length) {
   untracked.forEach((f) => console.log(`      ${f}`));
 }
 console.log('  - Commit only the files this changed. They are:');
-const changed = git('status', '--porcelain', '--untracked-files=all').stdout.trim().split('\n').filter(Boolean)
+// trimEnd, not trim: porcelain lines start with a status column that may be
+// a space, and trimming it shifts the first path by one character.
+const changed = git('status', '--porcelain', '--untracked-files=all').stdout.trimEnd().split('\n').filter(Boolean)
   .map((l) => l.slice(3).split(' -> ').pop()).filter((f) => !untracked.includes(f));
 changed.forEach((f) => console.log(`      ${f}`));
 console.log('');

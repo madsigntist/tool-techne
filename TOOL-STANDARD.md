@@ -306,7 +306,8 @@ node tool-techne/scripts/migrate.mjs <tool folder>
 ```
 
 It runs the tool's own check first and stops if that fails. Then it moves
-CLAUDE.md to AGENTS.md word for word, updates `tool.json`, keeps the tool's
+CLAUDE.md to AGENTS.md word for word (or keeps both, when CLAUDE.md already
+imports AGENTS.md), updates `tool.json`, keeps the tool's
 own gates in `test` and its own installer in `setupExtra`, copies the kit,
 adds the hooks, and runs the check again. It does not commit: it lists the
 files it changed, and every other file that mentions CLAUDE.md, for a

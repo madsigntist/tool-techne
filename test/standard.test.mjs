@@ -451,6 +451,37 @@ test('migrate: an old-standard tool moves over, keeps its gates and setup, and p
   assert.ok(fs.existsSync(path.join(d3, 'CLAUDE.md')) && !fs.existsSync(path.join(d3, 'AGENTS.md')), 'nothing changed');
 });
 
+test('migrate: a tool whose CLAUDE.md already imports AGENTS.md keeps both files', () => {
+  const root = parentFolder();
+  const d = oldTool(root, 'agents-first');
+  const agents = '# Agents First\n\nTool-agnostic procedures.\n';
+  const claude = '# Agents First\n\nClaude-only note.\n\n@AGENTS.md\n';
+  fs.writeFileSync(path.join(d, 'AGENTS.md'), agents);
+  fs.writeFileSync(path.join(d, 'CLAUDE.md'), claude);
+  spawnSync('git', ['add', '-A'], {cwd: d, env: ENV});
+  spawnSync('git', ['commit', '-qm', 'agents first'], {cwd: d, env: ENV});
+  const r = spawnSync(process.execPath, [path.join(HERE, 'scripts', 'migrate.mjs'), d], {encoding: 'utf8', env: ENV});
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(fs.readFileSync(path.join(d, 'AGENTS.md'), 'utf8'), agents, 'AGENTS.md untouched');
+  assert.equal(fs.readFileSync(path.join(d, 'CLAUDE.md'), 'utf8'), claude, 'CLAUDE.md untouched');
+  assert.match(r.stdout, /CLAUDE\.md holds more than "@AGENTS\.md"/);
+  // No rename here, so git's first status line starts with a space: the
+  // case where trimming the output cut a character off the first path.
+  const toCommit = r.stdout.split('Commit only')[1];
+  for (const f of ['package.json', 'tool.json', 'scripts/check.mjs']) {
+    assert.match(toCommit, new RegExp(`^ {6}${f.replace(/\./g, '\\.')}$`, 'm'), `${f} listed whole`);
+  }
+  assert.deepEqual(checkTool(d).fails, []);
+
+  // An AGENTS.md that CLAUDE.md does not import is still refused.
+  const d2 = oldTool(root, 'two-files');
+  fs.writeFileSync(path.join(d2, 'AGENTS.md'), agents);
+  spawnSync('git', ['add', '-A'], {cwd: d2, env: ENV});
+  spawnSync('git', ['commit', '-qm', 'two files'], {cwd: d2, env: ENV});
+  assert.match(spawnSync(process.execPath, [path.join(HERE, 'scripts', 'migrate.mjs'), d2], {encoding: 'utf8', env: ENV}).stderr,
+    /does not import it/);
+});
+
 test('migrate: a check under another script name, and a register lint of its own, are kept', () => {
   const root = parentFolder();
   const d = oldTool(root, 'own-lint', {checkScript: 'check:tool', ownRegister: true});

@@ -46,6 +46,8 @@ of. The code they fixed came with it.
 | 1.5 | A double quote in a tool's description stopped the scaffold: tool.json could not be read | The description was placed inside quoted strings in JSON, HTML and later TOML and Python, as typed | Typed text is cleaned first: one line, double quotes made single, no backslashes or angle brackets. The Python scaffold test uses a description with all of them | GATE | self-review | no |
 | 1.6 | A Python tool's `.python-version` would have kept its placeholder instead of the version | The list of files whose placeholders get filled matched dotfile names of letters only, and this one has a hyphen | The pattern allows hyphens. The Python scaffold test checks the file holds a real version | GATE | self-review | no |
 | 1.7 | In tool-techne's own tests, a tool whose tests failed still passed its check, so a test that expected red would have passed anyway | Node's test runner sets NODE_TEST_CONTEXT for every process it starts, and a `node --test` that inherits it reports to the parent and exits 0 | The tests remove NODE_TEST_CONTEXT from the environment they give child processes. Positive-controlled: the migration test's broken tool passed its baseline with it, and fails as it should without it | GATE | gate | no |
+| 1.8 | The migration's "commit only these files" list showed `ackage.json` for `package.json` | The git status output was trimmed whole, which removed the leading space of the first line's status column, so cutting the status off took one letter of the path | Trim only the end. A test on a tool with no rename, where the first status line starts with a space, checks each path is listed whole. Positive-controlled: the old trim fails it | GATE | eye | no |
+| 1.9 | The migration stopped on a tool that already kept its rules in AGENTS.md, with CLAUDE.md importing it | It treated any existing AGENTS.md as a conflict to merge by hand | A CLAUDE.md that imports AGENTS.md is accepted and both are kept; the report notes anything in CLAUDE.md other assistants will not see. Tested, and an AGENTS.md that is not imported is still refused | GATE | gate | no |
 
 ## 2. Drift between tools
 
@@ -103,6 +105,6 @@ Every row marked **Again?** = yes, and what that says about its tag.
 
 | | |
 | --- | --- |
-| Defects recorded | 18 |
-| Fixed by a gate or a generator | 15 |
+| Defects recorded | 20 |
+| Fixed by a gate or a generator | 17 |
 | Defect classes that recurred | 0 |
