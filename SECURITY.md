@@ -10,7 +10,9 @@ and prints the file and line number of a match, not the key.
 
 ## Network
 
-None. No script makes a network request. The panel profile's server, in
+Only `scripts/release.mjs --publish`, which the maintainer runs: it pushes
+to the git remote and creates a GitHub release through the GitHub CLI. No
+other script makes a network request. The panel profile's server, in
 tools that use it, listens on `127.0.0.1` only and refuses requests from
 other sites.
 
@@ -32,6 +34,8 @@ other sites.
 - `install.mjs`: copies slash commands into `.claude/commands/` (or where
   `--scope` says).
 - `kit.mjs sync`: overwrites kit copies in tools.
+- `release.mjs`: writes `dist/`. With `--publish`: commits the version,
+  tags, pushes, and creates the release.
 
 Nothing outside the folder that holds tool-techne and its tools, except
 `--scope user`, which writes to `~/.claude/commands/`.

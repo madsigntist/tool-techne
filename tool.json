@@ -25,7 +25,7 @@
     "further": "GOING-FURTHER.md"
   },
   "check": "node scripts/check.mjs",
-  "test": "node --test test/standard.test.mjs && node scripts/check-standard.mjs",
+  "test": "node --test test/standard.test.mjs",
   "reads": [],
   "vendored": [],
   "guard": null,

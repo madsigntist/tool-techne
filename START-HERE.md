@@ -9,14 +9,18 @@ helps you build it.
 
 ## If you are a person
 
-1. **Install two free programs**, if you do not have them yet:
+1. **Get tool-techne**: download `tool-techne.zip` from the Releases page
+   of the tool-techne GitHub repo, and unzip it where you will keep your
+   tools. If your folder is called `tool-techne-main`, rename it to
+   `tool-techne`.
+2. **Install two free programs**, if you do not have them yet:
    - **Node.js**: https://nodejs.org. Choose the LTS version.
    - **git**: https://git-scm.com/downloads
    Your AI assistant can walk you through either one. Ask it.
-2. **Open the `tool-techne` folder in your AI assistant.** In VS Code or
+3. **Open the `tool-techne` folder in your AI assistant.** In VS Code or
    Cursor: File, then Open Folder. In Claude Code: run `claude` in a
    terminal from inside the folder.
-3. **Say what you want to make**, in your own words. For example: "Help me
+4. **Say what you want to make**, in your own words. For example: "Help me
    start a tool that keeps track of the plants I water."
 
 Using an AI in a browser chat, like ChatGPT, Gemini or Claude on the web?
@@ -69,7 +73,14 @@ Then work out which of these you are:
     Terminal at Folder.
   - Linux: right-click in the folder, then Open in Terminal.
 
-### Step 2: Check the two programs
+### Step 2: Check the folder name and the two programs
+
+The folder must be named exactly `tool-techne`: every command here uses
+that name. GitHub's green Download ZIP button names it `tool-techne-main`.
+In editor mode, look at the folder you are in. In chat mode, ask them. If
+it is anything else, walk them through renaming it: close the folder in
+their editor first, rename it in File Explorer or Finder, then open it
+again.
 
 Run (or ask them to run):
 

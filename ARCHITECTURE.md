@@ -18,11 +18,18 @@ dependencies.
 | `scripts/check-standard.mjs` | The command line over `scripts/lib/standard.mjs` |
 | `scripts/lib/standard.mjs` | Every checkable rule as functions, plus `PROFILES`, `STACKS` and `KIT`. Changes no file |
 | `scripts/kit.mjs` | Syncs and reports kit copies |
+| `scripts/release.mjs` | Builds the release ZIP, verifies an unzipped copy, and with `--publish` tags and creates the GitHub release |
+| `scripts/lib/zip.mjs` | Reads a ZIP with Node's zlib, so verifying a release needs no unzip program |
 | `test/standard.test.mjs` | Scaffolds real tools into a temp folder and breaks them one part at a time |
 | `commands/`, `.github/prompts/` | The `/new-tool` wrappers for Claude Code and Copilot. Both say "follow START-HERE.md" |
 
 tool-techne carries its own copies of the required kit modules in
 `scripts/`, and its own check fails if they drift from `kit/`.
+
+A downloaded copy has no `.git` folder. Everything except the release
+script works without one: tool-techne's own test leaves out the git-repo
+rule for itself, and `check-standard --all` checks only the tools beside
+it, never tool-techne.
 
 ## Scaffold order
 
@@ -66,6 +73,7 @@ Nothing else.
 
 ## Write scope
 
-`new-tool.mjs` writes the new tool's folder, one entry in a parent repo's
-`.gitignore`, and the installed command copies. `kit.mjs sync` writes kit
+`release.mjs` writes `dist/`, and with `--publish` commits, tags, pushes and
+creates a GitHub release. `new-tool.mjs` writes the new tool's folder, one
+entry in a parent repo's `.gitignore`, and the installed command copies. `kit.mjs sync` writes kit
 copies into tools. The check writes nothing.

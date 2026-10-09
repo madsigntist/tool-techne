@@ -45,11 +45,20 @@ Tasks for whoever maintains tool-techne. To start a tool, see
 
 ## Release
 
-1. **SCRIPT** `node scripts/check.mjs` passes.
-2. **AI** read every changed file for personal or job-specific content.
-   This repo is public.
-3. **SCRIPT** bump `version` in `package.json`, commit, tag `vX.Y.Z`, push
-   with tags.
+1. **AI** read every file changed since the last release for personal or
+   job-specific content. This repo is public.
+2. **SCRIPT** `node scripts/release.mjs X.Y.Z`: refuses uncommitted
+   changes, runs the check, builds `dist/tool-techne.zip` with `tool-techne/`
+   as its top folder, unzips it and runs the full check in the copy.
+   Nothing is published.
+3. **SCRIPT** `node scripts/release.mjs X.Y.Z --publish`: the same, then
+   commits the version, tags, pushes, and creates the GitHub release with
+   the ZIP attached. It asks you to type the version first. Needs the
+   GitHub CLI signed in (`gh auth login`, once).
+
+The README's download link,
+`../../releases/latest/download/tool-techne.zip`, always gets the newest
+release's ZIP, so it never needs editing.
 
 ## When something goes wrong
 
@@ -61,3 +70,5 @@ Tasks for whoever maintains tool-techne. To start a tool, see
 | `installed command(s) ... differ` | A command was edited in an installed copy | Edit `commands/` in the tool, then `node scripts/install.mjs` |
 | `port N is also claimed` | Two tools on one port | Change the newer tool's `port` in tool.json |
 | `kit: ... differs from the kit` | A kit copy was edited in a tool | Move the change into `kit/`, then `kit.mjs sync` |
+| Commands in the docs say the folder does not exist | The folder is `tool-techne-main`, from GitHub's green Download ZIP | Rename it to `tool-techne` |
+| `release.mjs`: `the unzipped copy fails its check` | Something works only inside a git repo, or a file the check needs is not committed | Read the output it shows. Commit any missing file, or make the script work without `.git` |

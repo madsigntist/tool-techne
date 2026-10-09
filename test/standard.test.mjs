@@ -9,6 +9,7 @@ import test from 'node:test';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {checkAll, checkTool, nextPort} from '../scripts/lib/standard.mjs';
+import {extractZip} from '../scripts/lib/zip.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const NEW_TOOL = path.join(HERE, 'scripts', 'new-tool.mjs');
@@ -308,9 +309,32 @@ test('kit: an edited copy fails the check, and sync repairs it', () => {
   assert.ok(!checkTool(t.dir).fails.some((f) => /^kit:/.test(f)), JSON.stringify(checkTool(t.dir).fails));
 });
 
-test('tool-techne\'s own kit copies match the kit', () => {
-  const r = checkTool(HERE);
-  assert.ok(!r.fails.some((f) => /^kit:/.test(f)), JSON.stringify(r.fails));
+test('tool-techne meets its own standard, with or without .git', () => {
+  // A downloaded ZIP has no .git, and is still a working copy.
+  const fails = checkTool(HERE).fails.filter((f) => !/not its own git repo/.test(f));
+  assert.deepEqual(fails, []);
+});
+
+test('release ZIP: one tool-techne/ folder, and a tool made from the unzipped copy passes its check', {
+  skip: !fs.existsSync(path.join(HERE, '.git')) && 'not a git repo, so there is no commit to archive',
+}, () => {
+  const tmp = parentFolder();
+  const zip = path.join(tmp, 'tool-techne.zip');
+  const a = spawnSync('git', ['archive', '--format=zip', '--prefix=tool-techne/', '-o', zip, 'HEAD'], {cwd: HERE, encoding: 'utf8'});
+  assert.equal(a.status, 0, a.stderr);
+  const names = extractZip(zip, tmp);
+  assert.deepEqual(names.filter((n) => !n.startsWith('tool-techne/')), []);
+  for (const f of ['START-HERE.md', 'AGENTS.md', 'LICENSE', 'scripts/new-tool.mjs', 'skeleton/core/tool.json']) {
+    assert.ok(names.includes(`tool-techne/${f}`), `${f} is in the ZIP`);
+  }
+  const copy = path.join(tmp, 'tool-techne');
+  const r = spawnSync(process.execPath, ['scripts/new-tool.mjs', '--name', 'from-zip', '--profile', 'page'], {cwd: copy, encoding: 'utf8', env: ENV});
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(runIn(path.join(tmp, 'from-zip'), 'scripts/check.mjs').status, 0);
+  const all = spawnSync(process.execPath, ['scripts/check-standard.mjs', '--all'], {cwd: copy, encoding: 'utf8'});
+  assert.equal(all.status, 0, all.stdout);
+  assert.match(all.stdout, /from-zip/);
+  assert.doesNotMatch(all.stdout, /(OK|FAIL) {2}tool-techne\b/, '--all leaves tool-techne itself out');
 });
 
 test('panel-core: refuses other hosts and origins, runs one job', async () => {

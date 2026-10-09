@@ -17,11 +17,16 @@ Made by Michael Kelly.
 
 Pick one:
 
-- **Download the ZIP**: the green **Code** button on this page, then
-  **Download ZIP**. Unzip it into a folder where you will keep your tools.
+- **Download [tool-techne.zip](../../releases/latest/download/tool-techne.zip)**,
+  the latest release. Unzip it into a folder where you will keep your tools.
+  You get a folder named `tool-techne`.
 - **Use this template**: the **Use this template** button makes your own
   copy on GitHub.
 - **Clone it**: `git clone <this repo's URL>`
+
+The green **Code** button's **Download ZIP** works too, but GitHub names
+the folder `tool-techne-main`. Rename it to `tool-techne`, because every
+command in these documents uses that name.
 
 ## What you need
 

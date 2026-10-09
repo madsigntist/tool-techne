@@ -2,8 +2,9 @@
 
 ## Start here (next session)
 
-Phase 1 is built: a public, AI-neutral starter with `static` and `node`
-stacks, a guided start, and a secrets gate. Phase 2 is next.
+Phase 1 is built and released: a public, AI-neutral starter with `static`
+and `node` stacks, a guided start, a secrets gate, and a release script.
+Phase 2 is next.
 
 ## Decisions (settled, do not reopen)
 
@@ -33,6 +34,13 @@ stacks, a guided start, and a secrets gate. Phase 2 is next.
   cached, and a plugin does not load its instruction file. Revisit if
   tool-techne gets users who never edit it.
 - 2026-10-09: **MIT license, author Michael Kelly.**
+- 2026-10-09: **Releases ship a built `tool-techne.zip`.** GitHub's own
+  Download ZIP names the folder `tool-techne-main`, and nothing in a repo
+  can change that. The built ZIP's top folder is `tool-techne`. The README
+  links to it with a relative link, so a fork links to its own releases.
+- 2026-10-09: **Repo structure stays flat.** Nesting everything in a
+  `tool-techne/` subfolder would fix the green button's ZIP but break
+  clones and hide the README.
 
 ## Next (phase 2)
 

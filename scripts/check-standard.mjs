@@ -4,7 +4,7 @@
  * Usage:
  *   node scripts/check-standard.mjs                 the current folder
  *   node scripts/check-standard.mjs <tool folder>   one tool
- *   node scripts/check-standard.mjs --all           every tool beside this one, in the same folder
+ *   node scripts/check-standard.mjs --all           every tool beside this one, not itself
  *   node scripts/check-standard.mjs --list          the registry
  *   node scripts/check-standard.mjs --registers     every tool's register lint
  *   ... --root <folder>                             a folder other than ../
@@ -71,8 +71,10 @@ if (flag('--registers')) {
   process.exit(stale.length ? 1 : 0);
 }
 
+// tool-techne checks itself with its own check, and a downloaded copy has
+// no .git, so --all covers only the tools beside it.
 const results = flag('--all')
-  ? checkAll(ROOT)
+  ? checkAll(ROOT).filter((r) => path.resolve(r.dir) !== HERE)
   : [checkTool(path.resolve(positional[0] || process.cwd()))];
 const failing = results.filter((r) => r.fails.length);
 

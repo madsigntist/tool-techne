@@ -50,6 +50,12 @@ of. The code they fixed came with it.
 | 2.1 | Installed slash commands were a week older than their source, and one was missing | Installing a tool's commands was a manual step, and nothing compared a copy with its source | `check-standard.mjs` fails a tool whose installed copies differ from `commands/`. Positive-controlled in `test/standard.test.mjs` | GATE | self-review | no |
 | 2.2 | A fix to the register lint reached one tool's copy and not another's, which kept miscounting | Each tool carried a hand-copied lint, and nothing connected the copies | Shared scripts are kit modules with one source in `kit/`, and the check fails a tool whose copy differs. Positive-controlled in `test/standard.test.mjs` | GATE | reviewer | no |
 
+## 3. Downloads
+
+| # | Problem | Root cause | Fix | Tag | Found by | Again? |
+| --- | --- | --- | --- | --- | --- | --- |
+| 3.1 | A copy of tool-techne from a ZIP would have failed its own check, and the Claude startup hook would have reported it failing every session | A ZIP has no .git folder, and tool-techne checked itself with the rule that every tool is its own git repo, including from `check-standard --all` | tool-techne's own test leaves out the git rule for itself, and `--all` checks only the tools beside it. `release.mjs` unzips every release and runs the full check in the copy before anything is published, and a test does the same from the last commit | GATE | self-review | no |
+
 ---
 
 ## Recurrence audit
@@ -66,6 +72,6 @@ Every row marked **Again?** = yes, and what that says about its tag.
 
 | | |
 | --- | --- |
-| Defects recorded | 5 |
-| Fixed by a gate or a generator | 5 |
+| Defects recorded | 6 |
+| Fixed by a gate or a generator | 6 |
 | Defect classes that recurred | 0 |
