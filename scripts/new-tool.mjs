@@ -17,7 +17,7 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {
-  APP_PORT_START, KIT, KIT_DIR, KIT_REQUIRED, NODE_FLOOR, PANEL_PORT_START, PROFILES, PYTHON_FLOOR,
+  APP_PORT_START, KIT, KIT_DEFAULT, KIT_DIR, NODE_FLOOR, PANEL_PORT_START, PROFILES, PYTHON_FLOOR,
   STACKS, STANDARD,
   checkTool, defaultStack, discover, nextPort, readManifest,
 } from './lib/standard.mjs';
@@ -258,7 +258,7 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 manifest.standard = STANDARD;
 manifest.test = STACKS[stack].test;
 if (!port) delete manifest.portEnv;
-manifest.kit = [...KIT_REQUIRED, 'setup-check'];
+manifest.kit = [...KIT_DEFAULT];
 if (profile === 'panel') manifest.kit.push('panel-core');
 if (guard) {
   manifest.guard = {open: ['data']};

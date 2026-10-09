@@ -3,11 +3,18 @@
 Instructions for any AI assistant working in this folder. `CLAUDE.md`,
 `GEMINI.md` and `.github/copilot-instructions.md` all point here.
 
+If this folder sits inside a larger project with its own instruction file,
+that file's rules are for that project's work, not for tool-techne. Follow
+this one here.
+
 ## What the person probably wants
 
 **If they want to start a tool, or are not sure what to do: follow
 [START-HERE.md](START-HERE.md)** from the section "If you are an AI
 assistant". That is what most people open this folder for.
+
+**If they want an existing tool brought onto this standard**, follow
+"Bring an existing tool over" in [RUNBOOK.md](RUNBOOK.md).
 
 The rest of this file is for changing tool-techne itself: the standard, the
 scaffold, the stacks or the checks.

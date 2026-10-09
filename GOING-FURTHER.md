@@ -87,6 +87,20 @@ node tool-techne/scripts/check-standard.mjs --all
 
 Documents are never updated this way. They are each tool's own.
 
+## Bringing an older tool over
+
+A tool made with an earlier tool standard (it has a `tool.json`) can move
+onto this one. Commit your work in it first, then from the folder that
+holds your tools:
+
+```
+node tool-techne/scripts/migrate.mjs my-old-tool --dry-run
+node tool-techne/scripts/migrate.mjs my-old-tool
+```
+
+It checks the tool before and after, keeps the tool's own checks and setup
+steps, and never commits for you. It ends with a list of what changed.
+
 ## Checking every tool
 
 ```

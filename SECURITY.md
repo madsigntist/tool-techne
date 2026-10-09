@@ -47,6 +47,10 @@ other sites.
   `--scope` says), sets `core.hooksPath` in the tool's own git config, and
   creates `.venv/` for a Python tool that lists packages.
 - `kit.mjs sync`: overwrites kit copies in tools.
+- `migrate.mjs`: changes files inside the one tool folder it is given, and
+  runs that tool's own check and setup. It refuses a tool with uncommitted
+  changes, so everything it does can be reviewed and undone with git. It
+  never commits.
 - `release.mjs`: writes `dist/`. With `--publish`: commits the version,
   tags, pushes, and creates the release.
 

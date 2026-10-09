@@ -45,6 +45,7 @@ of. The code they fixed came with it.
 | 1.4 | A second tool whose name had the same initials as the first (plant-tracker, photo-tidy) could not be made without knowing to pass --prefix | The scaffolder refused a taken prefix even when it had made the prefix up itself | A made-up prefix gets a number until it is free (pt2). Only a prefix the person chose stops the scaffold. Tested both ways in `test/standard.test.mjs` | GATE | self-review | no |
 | 1.5 | A double quote in a tool's description stopped the scaffold: tool.json could not be read | The description was placed inside quoted strings in JSON, HTML and later TOML and Python, as typed | Typed text is cleaned first: one line, double quotes made single, no backslashes or angle brackets. The Python scaffold test uses a description with all of them | GATE | self-review | no |
 | 1.6 | A Python tool's `.python-version` would have kept its placeholder instead of the version | The list of files whose placeholders get filled matched dotfile names of letters only, and this one has a hyphen | The pattern allows hyphens. The Python scaffold test checks the file holds a real version | GATE | self-review | no |
+| 1.7 | In tool-techne's own tests, a tool whose tests failed still passed its check, so a test that expected red would have passed anyway | Node's test runner sets NODE_TEST_CONTEXT for every process it starts, and a `node --test` that inherits it reports to the parent and exits 0 | The tests remove NODE_TEST_CONTEXT from the environment they give child processes. Positive-controlled: the migration test's broken tool passed its baseline with it, and fails as it should without it | GATE | gate | no |
 
 ## 2. Drift between tools
 
@@ -96,6 +97,6 @@ Every row marked **Again?** = yes, and what that says about its tag.
 
 | | |
 | --- | --- |
-| Defects recorded | 16 |
-| Fixed by a gate or a generator | 13 |
+| Defects recorded | 17 |
+| Fixed by a gate or a generator | 14 |
 | Defect classes that recurred | 0 |

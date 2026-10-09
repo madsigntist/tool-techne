@@ -56,12 +56,19 @@ export const KIT = {
   'check-secrets': 'scripts/check-secrets.mjs',
   'install': 'scripts/install.mjs',
   'lint-register-table': 'scripts/lint-register.mjs',
+  'lint-register-fields': 'scripts/lint-register.mjs',
   'setup-check': 'scripts/hooks/setup-check.mjs',
   'tool-guard': 'scripts/hooks/tool-guard.mjs',
   'panel-core': 'gui/panel-core.mjs',
 };
-/** Every tool carries these. */
-export const KIT_REQUIRED = ['check', 'check-secrets', 'install', 'lint-register-table'];
+/**
+ * Every tool carries these. The register lint is required too, but may be
+ * one of the two kit modules or the tool's own (one that also counts the
+ * tool's own numbers), so it is checked as a file, not a kit entry.
+ */
+export const KIT_REQUIRED = ['check', 'check-secrets', 'install'];
+/** What a new tool starts with. */
+export const KIT_DEFAULT = ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check'];
 
 /** Files that point other AI assistants at AGENTS.md. */
 export const AI_POINTERS = ['CLAUDE.md', 'GEMINI.md', '.github/copilot-instructions.md'];
@@ -222,8 +229,19 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
 
   // Register and its gate.
   const hooks = hooksOf(dir);
+  if (docs.register && !fs.existsSync(path.join(dir, 'scripts', 'lint-register.mjs'))) {
+    fails.push('no scripts/lint-register.mjs: the register is not checked');
+  }
   if (docs.register && !JSON.stringify(hooks.Stop || []).includes('lint-register')) {
     fails.push('no Stop hook running lint-register in .claude/settings.json');
+  }
+  if (m.setupExtra !== undefined) {
+    if (!Array.isArray(m.setupExtra)) fails.push('tool.json: "setupExtra" must be a list of script paths');
+    else {
+      for (const s of m.setupExtra) {
+        if (!fs.existsSync(path.join(dir, String(s)))) fails.push(`setupExtra: ${s} does not exist`);
+      }
+    }
   }
 
   // The check command exists.

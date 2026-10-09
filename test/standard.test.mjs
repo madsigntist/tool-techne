@@ -20,7 +20,11 @@ const NEW_TOOL = path.join(HERE, 'scripts', 'new-tool.mjs');
 const HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'techne-home-'));
 const GITCONFIG = path.join(HOME, '.gitconfig');
 fs.writeFileSync(GITCONFIG, '[user]\n\tname = Test\n\temail = test@example.com\n[init]\n\tdefaultBranch = main\n');
-const ENV = {...process.env, HOME, USERPROFILE: HOME, GIT_CONFIG_GLOBAL: GITCONFIG};
+// NODE_TEST_CONTEXT is set by this test runner for its children. A tool's own
+// `node --test` that inherits it reports to this runner and exits 0 even when
+// its tests fail, so a check that should go red would pass (register 1.7).
+const {NODE_TEST_CONTEXT: _nodeTestContext, ...parentEnv} = process.env;
+const ENV = {...parentEnv, HOME, USERPROFILE: HOME, GIT_CONFIG_GLOBAL: GITCONFIG};
 
 /**
  * Makes a temp parent folder for tools.
@@ -336,6 +340,115 @@ test('kit: an edited copy fails the check, and sync repairs it', () => {
   const sync = spawnSync(process.execPath, [path.join(HERE, 'scripts', 'kit.mjs'), 'sync', 'demo-kit', '--root', root], {encoding: 'utf8'});
   assert.equal(sync.status, 0, sync.stdout + sync.stderr);
   assert.ok(!checkTool(t.dir).fails.some((f) => /^kit:/.test(f)), JSON.stringify(checkTool(t.dir).fails));
+});
+
+/**
+ * Builds a tool in the older standard's shape: docs.claude, a check that
+ * chains the register lint with its own gates, a custom installer, a git
+ * repo with one commit.
+ * @param {string} root Parent folder.
+ * @param {string} name Folder name.
+ * @param {{checkScript: string, ownRegister: boolean}} o The old check's
+ *     package.json script name, and whether the register lint is the tool's
+ *     own rather than a kit copy.
+ * @return {string} The tool folder.
+ */
+function oldTool(root, name, {checkScript = 'check', ownRegister = false} = {}) {
+  const d = path.join(root, name);
+  const w = (rel, text) => {
+    fs.mkdirSync(path.dirname(path.join(d, rel)), {recursive: true});
+    fs.writeFileSync(path.join(d, rel), text);
+  };
+  w('tool.json', JSON.stringify({
+    standard: 1, name, title: 'Old Tool', purpose: 'An old tool.', profile: 'cli', shared: false, port: null,
+    commands: null,
+    docs: {readme: 'README.md', runbook: 'RUNBOOK.md', architecture: 'ARCHITECTURE.md', roadmap: 'ROADMAP.md',
+      claude: 'CLAUDE.md', register: 'DEFECT-REGISTER.md'},
+    check: `npm run ${checkScript}`, reads: [], vendored: [], guard: null,
+    ...(ownRegister ? {} : {kit: ['lint-register-table']}),
+  }, null, 2));
+  w('package.json', JSON.stringify({
+    name, private: true, type: 'module', engines: {node: '>=22'},
+    scripts: {[checkScript]: 'node scripts/lint-register.mjs && npm test', test: 'node --test', install: 'node scripts/install.mjs',
+      ...(checkScript === 'check' ? {} : {check: 'node scripts/something-else.mjs'})},
+  }, null, 2));
+  w('CLAUDE.md', '# Old Tool\n\nThe workspace file does not apply here.\n\n## Rules\n\n- Keep it working.\n');
+  for (const f of ['README.md', 'RUNBOOK.md', 'ARCHITECTURE.md']) w(f, `# ${f}\n`);
+  w('ROADMAP.md', '# Roadmap\n\n## Decisions\n');
+  w('DEFECT-REGISTER.md', fs.readFileSync(path.join(HERE, 'skeleton', 'core', 'DEFECT-REGISTER.md'), 'utf8').replaceAll('{{TITLE}}', 'Old Tool'));
+  const lint = fs.readFileSync(path.join(HERE, 'kit', 'lint-register-table.mjs'), 'utf8');
+  w('scripts/lint-register.mjs', ownRegister ? `${lint}\n// counts this tool's own numbers too\n` : lint.replace('See AGENTS.md', 'See CLAUDE.md'));
+  w('scripts/install.mjs', "if (process.argv.includes('--check')) console.log('custom check');\nelse console.log('custom setup step ran');\n");
+  w('test/a.test.mjs', "import test from 'node:test';\ntest('works', () => {});\n");
+  w('.claude/settings.json', fs.readFileSync(path.join(HERE, 'skeleton', 'core', '.claude', 'settings.json'), 'utf8'));
+  w('.gitignore', 'node_modules/\n');
+  const git = (...a) => spawnSync('git', a, {cwd: d, env: ENV});
+  git('init', '-q', '-b', 'main');
+  git('add', '-A');
+  git('commit', '-q', '-m', 'old tool');
+  return d;
+}
+
+test('migrate: an old-standard tool moves over, keeps its gates and setup, and passes', () => {
+  const root = parentFolder();
+  const d = oldTool(root, 'old-tool');
+  fs.writeFileSync(path.join(d, 'my-notes.txt'), 'not part of this\n');
+  const run = (dir, ...a) => spawnSync(process.execPath, [path.join(HERE, 'scripts', 'migrate.mjs'), dir, ...a], {encoding: 'utf8', env: ENV});
+  const r = run(d);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+
+  const m = JSON.parse(fs.readFileSync(path.join(d, 'tool.json'), 'utf8'));
+  assert.equal(m.stack, 'node');
+  assert.equal(m.docs.agents, 'AGENTS.md');
+  assert.equal(m.docs.claude, undefined);
+  assert.equal(m.check, 'node scripts/check.mjs');
+  assert.equal(m.test, 'npm test', 'its own gates, without the register lint');
+  assert.deepEqual(m.setupExtra, ['scripts/setup-tool.mjs']);
+  assert.deepEqual(m.kit, ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check']);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(d, 'package.json'), 'utf8')).scripts.check, 'node scripts/check.mjs');
+  assert.equal(fs.readFileSync(path.join(d, 'CLAUDE.md'), 'utf8'), '@AGENTS.md\n');
+  const agents = fs.readFileSync(path.join(d, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /The workspace file does not apply here\.\n\nInstructions for any AI assistant/, 'note after the first paragraph');
+  assert.match(agents, /## Rules\n\n- Keep it working\./, 'rules carried over word for word');
+  assert.deepEqual(checkTool(d).fails, []);
+
+  const setup = runIn(d, 'scripts/install.mjs');
+  assert.equal(setup.status, 0, setup.out);
+  assert.match(setup.out, /custom setup step ran/, 'its own installer still runs');
+  assert.match(runIn(d, 'scripts/check.mjs').out, /Everything passed/);
+  assert.match(r.stdout, /Left alone[\s\S]*my-notes\.txt/);
+  assert.doesNotMatch(r.stdout.split('Commit only')[1], /my-notes\.txt/, 'not listed to commit');
+
+  // Refusals: already moved, and uncommitted changes.
+  spawnSync('git', ['add', '-A'], {cwd: d, env: ENV});
+  spawnSync('git', ['commit', '-q', '-m', 'moved'], {cwd: d, env: ENV});
+  assert.match(run(d).stderr, /already has "stack"/);
+  const d2 = oldTool(root, 'dirty-tool');
+  fs.appendFileSync(path.join(d2, 'README.md'), 'edit\n');
+  assert.match(run(d2).stderr, /commit or discard these changes first/);
+
+  // A baseline that fails stops it before anything changes.
+  const d3 = oldTool(root, 'broken-tool');
+  fs.writeFileSync(path.join(d3, 'test', 'a.test.mjs'), "import test from 'node:test';\ntest('fails', () => { throw new Error('x'); });\n");
+  spawnSync('git', ['commit', '-qam', 'break it'], {cwd: d3, env: ENV});
+  const broken = run(d3);
+  assert.equal(broken.status, 1, broken.stdout + broken.stderr);
+  assert.match(broken.stderr, /fails its own check before migration/);
+  assert.ok(fs.existsSync(path.join(d3, 'CLAUDE.md')) && !fs.existsSync(path.join(d3, 'AGENTS.md')), 'nothing changed');
+});
+
+test('migrate: a check under another script name, and a register lint of its own, are kept', () => {
+  const root = parentFolder();
+  const d = oldTool(root, 'own-lint', {checkScript: 'check:tool', ownRegister: true});
+  const ownLint = fs.readFileSync(path.join(d, 'scripts', 'lint-register.mjs'), 'utf8');
+  const r = spawnSync(process.execPath, [path.join(HERE, 'scripts', 'migrate.mjs'), d], {encoding: 'utf8', env: ENV});
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const pkg = JSON.parse(fs.readFileSync(path.join(d, 'package.json'), 'utf8'));
+  assert.equal(pkg.scripts['check:tool'], 'node scripts/check.mjs');
+  assert.equal(pkg.scripts.check, 'node scripts/something-else.mjs', 'an unrelated "check" script is left alone');
+  assert.equal(fs.readFileSync(path.join(d, 'scripts', 'lint-register.mjs'), 'utf8'), ownLint, 'its own lint is not replaced');
+  assert.ok(!JSON.parse(fs.readFileSync(path.join(d, 'tool.json'), 'utf8')).kit.some((k) => k.startsWith('lint-register')));
+  assert.deepEqual(checkTool(d).fails, []);
 });
 
 test('tool-techne meets its own standard, with or without .git', () => {

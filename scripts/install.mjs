@@ -6,8 +6,12 @@
  * TOOL-KIT MODULE "install". The source is tool-techne/kit/. Never edit a
  * tool's copy: edit the source, then run
  * `node tool-techne/scripts/kit.mjs sync --all`. The standard check fails a
- * tool whose copy differs from the source. A step only one tool needs goes
- * in that tool's own script, run from tool.json "setupCheck".
+ * tool whose copy differs from the source.
+ *
+ * A step only one tool needs (a browser download, a file that must exist)
+ * goes in that tool's own script, listed in tool.json "setupExtra". Each is
+ * run with node after the standard steps, with --check passed through, and
+ * must exit non-zero when something is missing.
  *
  * Usage:
  *   node scripts/install.mjs                  install
@@ -172,6 +176,14 @@ if (!dests) {
     step(CHECK ? same : true, `${files.length} slash command(s) in ${dest}`,
         `Out of date. Run: node scripts/install.mjs --scope ${scope}`);
   }
+}
+
+// The tool's own setup steps, after the standard ones.
+for (const extra of Array.isArray(manifest.setupExtra) ? manifest.setupExtra : []) {
+  console.log(`\n  --- ${extra}\n`);
+  const r = spawnSync(process.execPath, [extra, ...(CHECK ? ['--check'] : [])], {cwd: ROOT, stdio: 'inherit'});
+  console.log('');
+  step(r.status === 0, `This tool's own setup (${extra})`, 'Read its output above.');
 }
 
 const failed = steps.filter((s) => !s.ok);

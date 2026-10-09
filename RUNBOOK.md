@@ -11,6 +11,23 @@ Tasks for whoever maintains tool-techne. To start a tool, see
    It ends with `Standard check: OK`.
 3. **AI** fills ROADMAP decisions, README and AGENTS.md with the person.
 
+## Bring an existing tool over
+
+For a tool on an older standard (it has a `tool.json`).
+
+1. **SCRIPT** commit or discard the tool's changes to tracked files. New
+   files that are not part of this can stay; they are left alone.
+2. **SCRIPT** `node scripts/migrate.mjs <tool folder> --dry-run`: what it
+   will change. Then without `--dry-run`. It runs the tool's own check
+   before and after, and ends with the files it changed.
+3. **AI** read the list of other files that mention CLAUDE.md. Where they
+   mean the tool's rules (a doc that points a reader there), point them at
+   AGENTS.md. Where they mean CLAUDE.md as a thing, leave them.
+4. **AI** if the tool had its own installer, now `scripts/setup-tool.mjs`:
+   it still runs, inside the standard one. Trimming the steps they share is
+   optional.
+5. **SCRIPT** commit only the files it listed, in the tool's own repo.
+
 ## Add a stack
 
 1. **AI** make `stacks/<name>/` with the files the stack needs: its

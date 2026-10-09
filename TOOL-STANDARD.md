@@ -82,7 +82,8 @@ in one tool's copy.
 | `check` | `scripts/check.mjs` | the one check command | yes |
 | `check-secrets` | `scripts/check-secrets.mjs` | no secrets in what git keeps | yes |
 | `install` | `scripts/install.mjs` | setup: Node.js, git, dependencies, commands | yes |
-| `lint-register-table` | `scripts/lint-register.mjs` | the defect register's counts | yes |
+| `lint-register-table` | `scripts/lint-register.mjs` | a register with one table row per defect (the starter's shape) | one of these, or the tool's own |
+| `lint-register-fields` | `scripts/lint-register.mjs` | a register with one two-column table per defect | one of these, or the tool's own |
 | `setup-check` | `scripts/hooks/setup-check.mjs` | Claude Code: says on opening what is not set up | |
 | `tool-guard` | `scripts/hooks/tool-guard.mjs` | the edit guard | |
 | `panel-core` | `gui/panel-core.mjs` | the panel's localhost check, job runner and detach | |
@@ -139,7 +140,9 @@ that points at its guide.
 
 Every tool runs again, so every tool keeps one. `scripts/lint-register.mjs`
 fails when its counts are wrong, and a Claude Code Stop hook runs it.
-**Checked.**
+**Checked.** The lint is one of the two kit modules, or the tool's own when
+it also counts the tool's own numbers (built pages, gate scripts). A tool's
+own lint is left out of `kit`, so no sync replaces it.
 
 ### 8. One check command
 
@@ -181,6 +184,11 @@ A `static` tool runs in any browser and pins nothing.
 `scripts/install.mjs` installs everything and is safe to run again.
 `--check` reports and changes nothing. In Claude Code a SessionStart hook
 runs it, and says nothing unless something is missing.
+
+A step only one tool needs (a browser download, a file that must exist)
+goes in the tool's own script, listed in `tool.json` `setupExtra`. The
+standard installer runs each one after its own steps, passing `--check`
+through. Each listed script must exist. **Checked.**
 
 ### 12. Data has a place
 
@@ -282,6 +290,21 @@ node tool-techne/scripts/check-standard.mjs --registers  every tool's register l
 node tool-techne/scripts/kit.mjs status                  which kit copies differ
 node tool-techne/scripts/kit.mjs sync --all              copy the kit into every tool
 ```
+
+## Bringing an existing tool over
+
+A tool built to an older standard (it has a `tool.json`) moves over with:
+
+```
+node tool-techne/scripts/migrate.mjs <tool folder>
+```
+
+It runs the tool's own check first and stops if that fails. Then it moves
+CLAUDE.md to AGENTS.md word for word, updates `tool.json`, keeps the tool's
+own gates in `test` and its own installer in `setupExtra`, copies the kit,
+adds the hooks, and runs the check again. It does not commit: it lists the
+files it changed, and every other file that mentions CLAUDE.md, for a
+person to review. `--dry-run` says what it would do.
 
 ## Changing the standard
 

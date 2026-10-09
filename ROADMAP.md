@@ -2,9 +2,10 @@
 
 ## Start here (next session)
 
-v1.1.0 adds the Python stack, the pre-commit hook, and CI on Windows,
-macOS and Linux. What is left from phase 2 is testing the walkthrough on
-assistants other than Claude, which needs a person with those accounts.
+v1.2.0 adds `migrate.mjs` for tools on an older standard, the second
+register format, and `setupExtra` for a tool's own setup steps. Still open
+from phase 2: testing the walkthrough on assistants other than Claude,
+which needs a person with those accounts.
 
 ## Decisions (settled, do not reopen)
 
@@ -51,6 +52,16 @@ assistants other than Claude, which needs a person with those accounts.
   slow enough that people skip the hook.
 - 2026-10-09: **Node.js 22 is the floor.** 18 and 20 are past end of life,
   and CI runs 22 on every change, so the stated floor is the tested one.
+- 2026-10-09: **A tool's own installer is kept, not replaced.** Migration
+  moves it to `scripts/setup-tool.mjs` and lists it in `setupExtra`, so
+  `node scripts/install.mjs` still does everything it did, and every doc
+  and button that names that path keeps working.
+- 2026-10-09: **A tool's own register lint is allowed.** Some count the
+  tool's own numbers (built pages, gates). The rule is that a lint exists,
+  not that it is a kit copy.
+- 2026-10-09: **Migration never commits.** It refuses a tool with
+  uncommitted tracked changes, leaves new files alone, and lists exactly
+  what it changed, so the commit is the person's.
 - 2026-10-09: **No panel in Python.** `panel-core` is the security-critical
   half of a panel, and one copy is easier to keep right than two.
 
