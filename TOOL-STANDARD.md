@@ -8,7 +8,8 @@ tool.
 `scripts/check-standard.mjs` checks the parts of this that can be checked.
 The rest is judgment, and this file says which is which.
 
-Standard version: **1**. A tool's `tool.json` records the version it meets.
+Standard version: **2**. A tool's `tool.json` records the version it meets,
+and `node tool-techne/scripts/upgrade.mjs <tool>` brings it up to date.
 
 ## Core: every tool
 
@@ -87,6 +88,7 @@ in one tool's copy.
 | `setup-check` | `scripts/hooks/setup-check.mjs` | Claude Code: says on opening what is not set up | |
 | `tool-guard` | `scripts/hooks/tool-guard.mjs` | the edit guard | |
 | `panel-core` | `gui/panel-core.mjs` | the panel's localhost check, job runner and detach | |
+| `release` | `scripts/release.mjs` | a ZIP of the tool, verified to work on its own, and publishing it | in new tools |
 
 The kit is written in Node.js whatever the tool's stack, so tool-techne
 keeps one copy of each check instead of one per language. Copies, not a
@@ -113,8 +115,11 @@ imported across folders.
 Every document in `docs` must exist. **Checked.** Whether each holds only
 its own job is judgment.
 
-**AGENTS.md stays short.** It is read every session, so each line costs
-tokens every time. Over 250 lines is reported. **Checked (warning).**
+**AGENTS.md stays focused.** It is read every session, so it holds the
+rules most sessions need, and detail goes in ARCHITECTURE. Over 250 lines
+is reported. A tool whose rules are genuinely needed most sessions sets
+its own limit with `tool.json` `agentsMaxLines`, and says why in its
+ROADMAP decisions. **Checked (warning).**
 
 **ROADMAP opens with settled decisions.** A decision not written down gets
 argued again. A missing heading is reported. **Checked (warning).**
@@ -313,8 +318,33 @@ adds the hooks, and runs the check again. It does not commit: it lists the
 files it changed, and every other file that mentions CLAUDE.md, for a
 person to review. `--dry-run` says what it would do.
 
+## Sharing a tool
+
+`node scripts/release.mjs <version>` builds `dist/<name>.zip` from the last
+commit, unzips it somewhere empty, installs its dependencies there, and
+runs the full check in that copy. If the tool quietly depends on anything
+outside itself, that is where it shows. `tool.json` `releaseExclude` lists
+folders that hold the person's own records or client work, left out of the
+ZIP. `--publish` tags, pushes and creates the GitHub release.
+
+Files a tool copies from elsewhere, like a standards document kept once
+beside the tools, are listed in `vendored`. The check reports a copy whose
+source changed, and `node tool-techne/scripts/vendor.mjs sync <tool>`
+updates it. A source that is not on the computer at all, as in a
+handed-over copy, is not reported. **Checked (warning).**
+
+## Upgrading a tool
+
+`node tool-techne/scripts/upgrade.mjs <tool>` (or `--all`) runs every
+upgrade step since the standard the tool's `tool.json` records, with the
+tool's check before and after. Each step is idempotent. It never commits.
+
+| Standard | What the upgrade adds |
+| --- | --- |
+| 2 | the pre-commit hook, the AI pointer files, the release script and `dist/` in .gitignore, `guides/build-a-feature.md`, fresh kit copies, the Claude Code register and setup hooks |
+
 ## Changing the standard
 
-Raise `standard` here and in `scripts/lib/standard.mjs`, add the check with
-a positive-control test, and say here what an existing tool must do to
-move up.
+Raise `standard` here and in `scripts/lib/standard.mjs`, add the upgrade
+step in `scripts/lib/upgrades.mjs`, add the check with a positive-control
+test, and add a row to the upgrade table above.

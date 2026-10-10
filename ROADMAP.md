@@ -2,10 +2,10 @@
 
 ## Start here (next session)
 
-v1.2.0 adds `migrate.mjs` for tools on an older standard, the second
-register format, and `setupExtra` for a tool's own setup steps. Still open
-from phase 2: testing the walkthrough on assistants other than Claude,
-which needs a person with those accounts.
+v1.3.0 adds tool standard 2 and `upgrade.mjs`, a release script in every
+tool, `vendor.mjs` for shared documents, and the feature guide. Still open:
+testing the walkthrough on assistants other than Claude, which needs a
+person with those accounts.
 
 ## Decisions (settled, do not reopen)
 
@@ -62,6 +62,18 @@ which needs a person with those accounts.
 - 2026-10-09: **Migration never commits.** It refuses a tool with
   uncommitted tracked changes, leaves new files alone, and lists exactly
   what it changed, so the commit is the person's.
+- 2026-10-09: **Every standard version has an upgrade step.** Without one,
+  an improvement only reaches new tools. Steps are idempotent and never
+  commit; `migrate.mjs` runs them all, so a moved tool lands current.
+- 2026-10-09: **A tool proves it can be handed over by running its check in
+  an unzipped copy**, with its dependencies installed there. Anything it
+  quietly needs from around it fails there first.
+- 2026-10-09: **Shared documents are copied into tools, not referenced.** A
+  handed-over tool has no folder around it. One source, `vendored` copies,
+  and `vendor.mjs sync` keep one edit reaching every tool.
+- 2026-10-09: **AGENTS.md length is a warning a tool can raise with a
+  reason.** Measured on one complex tool, the movable part was about 2% of
+  each turn's context: the limit exists for focus, not tokens.
 - 2026-10-09: **No panel in Python.** `panel-core` is the security-critical
   half of a panel, and one copy is easier to keep right than two.
 

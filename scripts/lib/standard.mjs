@@ -10,7 +10,7 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
-export const STANDARD = 1;
+export const STANDARD = 2;
 export const INSTALL_SCOPES = ['tool', 'parent', 'user', 'none'];
 export const PANEL_PORT_START = 4870;
 export const APP_PORT_START = 4900;
@@ -60,6 +60,7 @@ export const KIT = {
   'setup-check': 'scripts/hooks/setup-check.mjs',
   'tool-guard': 'scripts/hooks/tool-guard.mjs',
   'panel-core': 'gui/panel-core.mjs',
+  'release': 'scripts/release.mjs',
 };
 /**
  * Every tool carries these. The register lint is required too, but may be
@@ -68,7 +69,7 @@ export const KIT = {
  */
 export const KIT_REQUIRED = ['check', 'check-secrets', 'install'];
 /** What a new tool starts with. */
-export const KIT_DEFAULT = ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check'];
+export const KIT_DEFAULT = ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check', 'release'];
 
 /** Files that point other AI assistants at AGENTS.md. */
 export const AI_POINTERS = ['CLAUDE.md', 'GEMINI.md', '.github/copilot-instructions.md'];
@@ -181,7 +182,9 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
     if (m[k] === undefined || m[k] === '') fails.push(`tool.json: "${k}" is missing`);
   }
   if (typeof m.standard !== 'number') fails.push('tool.json: "standard" must be a number');
-  else if (m.standard < STANDARD) warns.push(`meets standard ${m.standard}; the current one is ${STANDARD}`);
+  else if (m.standard < STANDARD) {
+    warns.push(`meets standard ${m.standard}; the current one is ${STANDARD}: run node tool-techne/scripts/upgrade.mjs ${folder}`);
+  }
   if (m.name && m.name !== folder) warns.push(`tool.json name "${m.name}" differs from the folder "${folder}"`);
   if (m.profile && !PROFILES[m.profile]) fails.push(`tool.json: profile must be one of ${Object.keys(PROFILES).join(', ')}`);
   if (m.stack && !STACKS[m.stack]) {
@@ -209,8 +212,11 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
   if (m.shared && !docs.security) fails.push('shared tool: docs.security (SECURITY.md) is required');
   if (docs.agents) {
     const lines = readText(at(docs.agents)).split('\n').length;
-    if (lines > AGENTS_MD_MAX_LINES) {
-      warns.push(`${docs.agents} is ${lines} lines (over ${AGENTS_MD_MAX_LINES}): it loads every session, move detail to ARCHITECTURE`);
+    // A tool can set its own limit, with a reason, when its rules are
+    // genuinely needed most sessions (a complex tool has more of them).
+    const max = Number.isInteger(m.agentsMaxLines) ? m.agentsMaxLines : AGENTS_MD_MAX_LINES;
+    if (lines > max) {
+      warns.push(`${docs.agents} is ${lines} lines (over ${max}): it loads every session; move detail to ARCHITECTURE, or set tool.json agentsMaxLines with a reason`);
     }
   }
   if (docs.roadmap && !/^#+ .*decision/im.test(readText(at(docs.roadmap)))) {
@@ -234,6 +240,15 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
   }
   if (docs.register && !JSON.stringify(hooks.Stop || []).includes('lint-register')) {
     fails.push('no Stop hook running lint-register in .claude/settings.json');
+  }
+  if (m.agentsMaxLines !== undefined && !(Number.isInteger(m.agentsMaxLines) && m.agentsMaxLines > 0)) {
+    fails.push('tool.json: "agentsMaxLines" must be a whole number');
+  }
+  if (m.releaseExclude !== undefined && !(Array.isArray(m.releaseExclude) && m.releaseExclude.every((x) => typeof x === 'string'))) {
+    fails.push('tool.json: "releaseExclude" must be a list of path patterns');
+  }
+  if (Array.isArray(m.kit) && m.kit.includes('release') && !/^\/?dist\/?$/m.test(readText(path.join(dir, '.gitignore')))) {
+    warns.push('the release script builds into dist/, and .gitignore does not list it');
   }
   if (m.secretsIgnore !== undefined && !(Array.isArray(m.secretsIgnore) && m.secretsIgnore.every((s) => typeof s === 'string'))) {
     fails.push('tool.json: "secretsIgnore" must be a list of path patterns');
@@ -338,9 +353,14 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
       continue;
     }
     const from = path.resolve(dir, v.from);
-    if (!fs.existsSync(from)) warns.push(`vendored ${v.path}: its source ${v.from} is gone`);
+    // A source that is not on this computer at all (its folder is missing)
+    // is normal in a handed-over copy. A folder that exists without the file
+    // means the source moved or was renamed.
+    if (!fs.existsSync(from)) {
+      if (fs.existsSync(path.dirname(from))) warns.push(`vendored ${v.path}: its source ${v.from} is gone`);
+    }
     else if (!v.forked && readText(from) !== readText(at(v.path))) {
-      warns.push(`vendored ${v.path} differs from ${v.from}: resync it, or mark it "forked": true`);
+      warns.push(`vendored ${v.path} differs from ${v.from}: run node tool-techne/scripts/vendor.mjs sync ${folder}, or mark it "forked": true`);
     }
   }
   for (const r of m.reads || []) {

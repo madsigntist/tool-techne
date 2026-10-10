@@ -15,6 +15,8 @@ dependencies.
 | `profiles/panel/` | Layered on for `--profile panel`: `gui/server.mjs` (on `panel-core`), `gui/index.html`, `scripts/status.mjs`, the `<prefix>-panel` command |
 | `profiles/guard/` | Layered on for `--guard`: the `<prefix>-tool` command and the hook entries |
 | `scripts/new-tool.mjs` | The scaffolder |
+| `scripts/upgrade.mjs`, `scripts/lib/upgrades.mjs` | One idempotent step per standard version; `upgrade.mjs` runs those above a tool's `standard`, `migrate.mjs` runs them all after moving a tool over |
+| `scripts/vendor.mjs` | Syncs and reports `vendored` copies against their sources |
 | `scripts/migrate.mjs` | Moves a tool from an older standard onto this one, checking it before and after. Writes only inside that tool's folder, never commits |
 | `scripts/check-standard.mjs` | The command line over `scripts/lib/standard.mjs` |
 | `scripts/lib/standard.mjs` | Every checkable rule as functions, plus `PROFILES`, `STACKS` and `KIT`. Changes no file |

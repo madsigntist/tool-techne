@@ -51,8 +51,10 @@ other sites.
   runs that tool's own check and setup. It refuses a tool with uncommitted
   changes, so everything it does can be reviewed and undone with git. It
   never commits.
-- `release.mjs`: writes `dist/`. With `--publish`: commits the version,
-  tags, pushes, and creates the release.
+- `release.mjs` (in tool-techne and in every tool): writes `dist/`. With
+  `--publish`: commits the version, tags, pushes, and creates the release.
+- `upgrade.mjs` and `vendor.mjs`: change files inside the tool folders they
+  are given. `upgrade.mjs` refuses uncommitted changes and never commits.
 
 Nothing outside the folder that holds tool-techne and its tools, except
 `--scope user`, which writes to `~/.claude/commands/`.

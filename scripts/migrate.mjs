@@ -38,6 +38,7 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {KIT, KIT_DIR, checkTool, readManifest} from './lib/standard.mjs';
+import {applyUpgrades} from './lib/upgrades.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -236,6 +237,13 @@ if (!JSON.stringify(settings.hooks.SessionStart || []).match(/setup-check|instal
 fs.mkdirSync(path.dirname(settingsPath), {recursive: true});
 fs.writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
 ok('pre-commit hook, and the Claude Code register and setup hooks');
+
+// Then every standard upgrade, so the tool lands on the current standard.
+const moved = JSON.parse(fs.readFileSync(at('tool.json'), 'utf8'));
+moved.standard = 1;
+const ran = applyUpgrades(dir, moved);
+fs.writeFileSync(at('tool.json'), `${JSON.stringify(moved, null, 2)}\n`);
+ok(`upgraded to standard ${moved.standard}${ran.length ? ` (${ran.map((r) => r.title).join('; ')})` : ''}`);
 
 // 7. Setup, secrets, the new check, the standard.
 const setup = spawnSync(process.execPath, ['scripts/install.mjs'], {cwd: dir, encoding: 'utf8'});

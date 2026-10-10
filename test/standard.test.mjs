@@ -341,7 +341,7 @@ test('kit: an edited copy fails the check, and sync repairs it', () => {
   const t = scaffold(root, ['--name', 'demo-kit', '--profile', 'panel', '--prefix', 'dk', '--node', '18']);
   assert.equal(t.status, 0, t.out);
   const m = JSON.parse(fs.readFileSync(path.join(t.dir, 'tool.json'), 'utf8'));
-  assert.deepEqual(m.kit, ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check', 'panel-core']);
+  assert.deepEqual(m.kit, ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check', 'release', 'panel-core']);
   fs.appendFileSync(path.join(t.dir, 'gui', 'panel-core.mjs'), '\n// local edit\n');
   assert.ok(hasFail(checkTool(t.dir), /kit: gui\/panel-core\.mjs differs from the kit/));
   fs.rmSync(path.join(t.dir, 'scripts', 'check-secrets.mjs'));
@@ -418,7 +418,8 @@ test('migrate: an old-standard tool moves over, keeps its gates and setup, and p
   assert.equal(m.check, 'node scripts/check.mjs');
   assert.equal(m.test, 'npm test', 'its own gates, without the register lint');
   assert.deepEqual(m.setupExtra, ['scripts/setup-tool.mjs']);
-  assert.deepEqual(m.kit, ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check']);
+  assert.deepEqual(m.kit, ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check', 'release']);
+  assert.equal(m.standard, 2, 'migrated straight to the current standard');
   assert.equal(JSON.parse(fs.readFileSync(path.join(d, 'package.json'), 'utf8')).scripts.check, 'node scripts/check.mjs');
   assert.equal(fs.readFileSync(path.join(d, 'CLAUDE.md'), 'utf8'), '@AGENTS.md\n');
   const agents = fs.readFileSync(path.join(d, 'AGENTS.md'), 'utf8');
@@ -494,6 +495,114 @@ test('migrate: a check under another script name, and a register lint of its own
   assert.equal(fs.readFileSync(path.join(d, 'scripts', 'lint-register.mjs'), 'utf8'), ownLint, 'its own lint is not replaced');
   assert.ok(!JSON.parse(fs.readFileSync(path.join(d, 'tool.json'), 'utf8')).kit.some((k) => k.startsWith('lint-register')));
   assert.deepEqual(checkTool(d).fails, []);
+});
+
+test('upgrade: a tool on standard 1 gets every step, and a second run changes nothing', () => {
+  const root = parentFolder();
+  const t = scaffold(root, ['--name', 'old-std', '--profile', 'page']);
+  assert.equal(t.status, 0, t.out);
+  // Make it look like a tool made by an early tool-techne: standard 1, no
+  // hook, no pointers, no release script.
+  const mp = path.join(t.dir, 'tool.json');
+  const m = JSON.parse(fs.readFileSync(mp, 'utf8'));
+  m.standard = 1;
+  m.kit = m.kit.filter((k) => k !== 'release');
+  fs.writeFileSync(mp, JSON.stringify(m, null, 2));
+  for (const f of ['.githooks/pre-commit', 'GEMINI.md', 'scripts/release.mjs', 'guides/build-a-feature.md']) {
+    fs.rmSync(path.join(t.dir, f));
+  }
+  fs.writeFileSync(path.join(t.dir, '.gitignore'), fs.readFileSync(path.join(t.dir, '.gitignore'), 'utf8').replace(/^dist\/$/m, ''));
+  const git = (...a) => spawnSync('git', a, {cwd: t.dir, env: ENV});
+  git('config', '--unset', 'core.hooksPath');
+  git('add', '-A');
+  git('commit', '-qm', 'an old tool');
+  assert.ok(checkTool(t.dir).warns.some((w) => /meets standard 1; the current one is 2: run node tool-techne\/scripts\/upgrade\.mjs/.test(w)));
+
+  const up = (...a) => spawnSync(process.execPath, [path.join(HERE, 'scripts', 'upgrade.mjs'), t.dir, ...a], {encoding: 'utf8', env: ENV});
+  const r = up();
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /added \.githooks\/pre-commit/);
+  assert.match(r.stdout, /added GEMINI\.md/);
+  assert.match(r.stdout, /\.gitignore: dist\//);
+  assert.match(r.stdout, /added guides[\\/]build-a-feature\.md/);
+  const after = JSON.parse(fs.readFileSync(mp, 'utf8'));
+  assert.equal(after.standard, 2);
+  assert.ok(after.kit.includes('release'));
+  assert.ok(fs.existsSync(path.join(t.dir, 'scripts', 'release.mjs')));
+  assert.equal(spawnSync('git', ['config', '--get', 'core.hooksPath'], {cwd: t.dir, encoding: 'utf8'}).stdout.trim(), '.githooks');
+  assert.deepEqual(checkTool(t.dir).fails, []);
+  assert.ok(!checkTool(t.dir).warns.some((w) => /meets standard/.test(w)));
+
+  git('add', '-A');
+  git('commit', '-qm', 'upgraded');
+  assert.match(up().stdout, /already on standard 2/, 'idempotent');
+});
+
+test('release: a tool builds a ZIP that works on its own, leaving out releaseExclude', () => {
+  const root = parentFolder();
+  const t = scaffold(root, ['--name', 'shareable', '--profile', 'cli', '--node', '22']);
+  assert.equal(t.status, 0, t.out);
+  fs.mkdirSync(path.join(t.dir, 'sites', 'acme'), {recursive: true});
+  fs.writeFileSync(path.join(t.dir, 'sites', 'acme', 'page.html'), '<p>client work</p>\n');
+  const mp = path.join(t.dir, 'tool.json');
+  fs.writeFileSync(mp, JSON.stringify({...JSON.parse(fs.readFileSync(mp, 'utf8')), releaseExclude: ['sites']}, null, 2));
+  spawnSync('git', ['add', '-A'], {cwd: t.dir, env: ENV});
+  spawnSync('git', ['commit', '-qm', 'client work and an exclusion'], {cwd: t.dir, env: ENV});
+
+  const r = spawnSync(process.execPath, ['scripts/release.mjs', '1.0.0'], {cwd: t.dir, encoding: 'utf8', env: ENV});
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /the unzipped copy passes its full check/);
+  assert.match(r.stdout, /left out \(releaseExclude\): sites/);
+  const names = extractZip(path.join(t.dir, 'dist', 'shareable.zip'), parentFolder());
+  assert.ok(names.every((n) => n.startsWith('shareable/')));
+  assert.ok(!names.some((n) => n.startsWith('shareable/sites/')), 'client work left out');
+  assert.ok(names.includes('shareable/AGENTS.md'));
+  // dist/ is ignored, so a second build is not refused as uncommitted work.
+  assert.equal(spawnSync(process.execPath, ['scripts/release.mjs', '1.0.1'], {cwd: t.dir, encoding: 'utf8', env: ENV}).status, 0);
+});
+
+test('vendor: a copied file follows its source, and a source that is not here is quiet', () => {
+  const root = parentFolder();
+  fs.mkdirSync(path.join(root, 'standards'));
+  fs.writeFileSync(path.join(root, 'standards', 'build.md'), '# Build standards\n\nv1\n');
+  const t = scaffold(root, ['--name', 'uses-standards', '--profile', 'page']);
+  assert.equal(t.status, 0, t.out);
+  fs.mkdirSync(path.join(t.dir, 'reference'));
+  fs.copyFileSync(path.join(root, 'standards', 'build.md'), path.join(t.dir, 'reference', 'build-standards.md'));
+  const mp = path.join(t.dir, 'tool.json');
+  fs.writeFileSync(mp, JSON.stringify({...JSON.parse(fs.readFileSync(mp, 'utf8')),
+    vendored: [{path: 'reference/build-standards.md', from: '../standards/build.md'}]}, null, 2));
+  assert.ok(!checkTool(t.dir).warns.some((w) => /vendored/.test(w)));
+
+  // The source changes: the check says which tool is behind, sync fixes it.
+  fs.writeFileSync(path.join(root, 'standards', 'build.md'), '# Build standards\n\nv2\n');
+  assert.ok(checkTool(t.dir).warns.some((w) => /vendored reference\/build-standards\.md differs[\s\S]*vendor\.mjs sync uses-standards/.test(w)));
+  const v = (...a) => spawnSync(process.execPath, [path.join(HERE, 'scripts', 'vendor.mjs'), ...a, '--root', root], {encoding: 'utf8'});
+  assert.equal(v('status').status, 1);
+  assert.match(v('sync', 'uses-standards').stdout, /sync {3}reference\/build-standards\.md/);
+  assert.match(fs.readFileSync(path.join(t.dir, 'reference', 'build-standards.md'), 'utf8'), /v2/);
+  assert.equal(v('status').status, 0);
+
+  // Handed over: the whole standards folder is absent, which is normal.
+  fs.rmSync(path.join(root, 'standards'), {recursive: true});
+  assert.ok(!checkTool(t.dir).warns.some((w) => /vendored/.test(w)), 'quiet without the source folder');
+  assert.match(v('status').stdout, /skip {3}reference\/build-standards\.md/);
+  // But a source folder that exists without the file means it moved.
+  fs.mkdirSync(path.join(root, 'standards'));
+  assert.ok(checkTool(t.dir).warns.some((w) => /its source \.\.\/standards\/build\.md is gone/.test(w)));
+});
+
+test('agentsMaxLines: a tool can set its own limit for AGENTS.md', () => {
+  const root = parentFolder();
+  const t = scaffold(root, ['--name', 'big-rules', '--profile', 'page']);
+  fs.appendFileSync(path.join(t.dir, 'AGENTS.md'), 'rule\n'.repeat(300));
+  assert.ok(checkTool(t.dir).warns.some((w) => /AGENTS\.md is \d+ lines \(over 250\)/.test(w)));
+  const mp = path.join(t.dir, 'tool.json');
+  const m = JSON.parse(fs.readFileSync(mp, 'utf8'));
+  fs.writeFileSync(mp, JSON.stringify({...m, agentsMaxLines: 600}, null, 2));
+  assert.ok(!checkTool(t.dir).warns.some((w) => /AGENTS\.md is/.test(w)));
+  fs.writeFileSync(mp, JSON.stringify({...m, agentsMaxLines: 'lots'}, null, 2));
+  assert.ok(hasFail(checkTool(t.dir), /agentsMaxLines" must be a whole number/));
 });
 
 test('tool-techne meets its own standard, with or without .git', () => {

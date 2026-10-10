@@ -28,6 +28,28 @@ For a tool on an older standard (it has a `tool.json`).
    optional.
 5. **SCRIPT** commit only the files it listed, in the tool's own repo.
 
+## Upgrade a tool to the current standard
+
+1. **SCRIPT** commit the tool's work first.
+2. **SCRIPT** `node scripts/upgrade.mjs <tool folder> --dry-run`, then
+   without `--dry-run`. Or `--all` for every tool beside tool-techne.
+3. **SCRIPT** commit only the files it lists, in the tool's own repo.
+
+## Share a tool
+
+1. **SCRIPT** in the tool: `node scripts/release.mjs 1.0.0`. It builds
+   `dist/<name>.zip` and proves an unzipped copy works on its own.
+2. **AI** read the "top level" line it prints. Anything there that is the
+   person's own records or client work goes in `tool.json`
+   `releaseExclude`; commit, and build again.
+3. **SCRIPT** hand over the ZIP, or `--publish` to put it on GitHub.
+
+## Update a shared document in every tool
+
+1. **AI** edit the source (the file the tools list in `vendored` `from`).
+2. **SCRIPT** `node scripts/vendor.mjs status`: which tools are behind.
+3. **SCRIPT** `node scripts/vendor.mjs sync --all`, then commit in each tool.
+
 ## Add a stack
 
 1. **AI** make `stacks/<name>/` with the files the stack needs: its

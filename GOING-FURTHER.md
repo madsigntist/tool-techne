@@ -74,7 +74,25 @@ Other assistants skip these. The pre-commit hook still checks every
 commit for secrets. Run the full `node scripts/check.mjs` yourself before
 you share a change, or ask your assistant to.
 
+## Sharing a tool with someone
+
+In the tool's folder:
+
+```
+node scripts/release.mjs 1.0.0
+```
+
+It builds `dist/<name>.zip` and proves it works on its own by running the
+tool's check in an unzipped copy. Folders of your own records or client
+work go in `tool.json` `releaseExclude`, so they stay out of the ZIP.
+
 ## Keeping tools up to date
+
+After updating tool-techne, bring each tool up to its standard:
+
+```
+node tool-techne/scripts/upgrade.mjs --all
+```
 
 Shared scripts (the kit) are copied into each tool. After updating
 tool-techne, run this from the folder that holds your tools:

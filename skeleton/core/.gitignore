@@ -10,6 +10,9 @@ secrets/
 data/
 
 node_modules/
+
+# Release ZIPs, built by scripts/release.mjs
+dist/
 *.log
 
 # Claude Code: local settings and the edit-guard unlock marker

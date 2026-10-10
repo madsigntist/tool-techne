@@ -28,6 +28,7 @@ The person may be new to code. Unless they ask for more detail:
 | [RUNBOOK.md](RUNBOOK.md) | Doing any task that repeats |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Changing how the parts fit together |
 | [ROADMAP.md](ROADMAP.md) | Before suggesting a change of direction. Settled decisions are listed there. Do not argue them again |
+| [guides/build-a-feature.md](guides/build-a-feature.md) | Adding anything to the tool: follow it step by step |
 | [DEFECT-REGISTER.md](DEFECT-REGISTER.md) | After fixing anything that broke |
 
 ## Rules

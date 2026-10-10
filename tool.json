@@ -1,5 +1,5 @@
 {
-  "standard": 1,
+  "standard": 2,
   "name": "tool-techne",
   "title": "tool-techne",
   "purpose": "Helps anyone start a tool with any AI assistant: a guided start, a tool standard, and the checks that keep each tool to it.",
@@ -22,7 +22,8 @@
     "standard": "TOOL-STANDARD.md",
     "start": "START-HERE.md",
     "glossary": "GLOSSARY.md",
-    "further": "GOING-FURTHER.md"
+    "further": "GOING-FURTHER.md",
+    "changelog": "CHANGELOG.md"
   },
   "check": "node scripts/check.mjs",
   "test": "node --test test/standard.test.mjs",
@@ -34,6 +35,7 @@
     "check-secrets",
     "install",
     "lint-register-table",
-    "setup-check"
+    "setup-check",
+    "release"
   ]
 }

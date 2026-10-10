@@ -70,9 +70,9 @@ tool-techne itself is tested on Windows, macOS and Linux on every change.
 ## Updating
 
 Download the new version and replace the `tool-techne` folder. Your tools
-are separate folders and are not touched. To bring a tool's shared scripts
-up to date afterward, run `node tool-techne/scripts/kit.mjs sync --all` from
-the folder that holds your tools.
+are separate folders and are not touched. Then bring them up to date from
+the folder that holds your tools: `node tool-techne/scripts/upgrade.mjs --all`.
+What changed is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Documents
 
@@ -81,6 +81,7 @@ the folder that holds your tools.
 | [START-HERE.md](START-HERE.md) | Start your first tool |
 | [GOING-FURTHER.md](GOING-FURTHER.md) | The options, explained |
 | [GLOSSARY.md](GLOSSARY.md) | Every term these documents use |
+| [CHANGELOG.md](CHANGELOG.md) | What changed in each release |
 | [TOOL-STANDARD.md](TOOL-STANDARD.md) | The full standard every tool is built to |
 | [RUNBOOK.md](RUNBOOK.md) | Tasks for whoever maintains tool-techne |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How tool-techne is put together |
