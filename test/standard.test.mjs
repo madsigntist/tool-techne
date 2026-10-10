@@ -583,6 +583,30 @@ test('vendor: a copied file follows its source, and a source that is not here is
   assert.match(fs.readFileSync(path.join(t.dir, 'reference', 'build-standards.md'), 'utf8'), /v2/);
   assert.equal(v('status').status, 0);
 
+  // --commit commits only the synced copy; other work in progress stays put.
+  const git = (...a) => spawnSync('git', a, {cwd: t.dir, encoding: 'utf8', env: ENV});
+  git('add', '-A');
+  git('commit', '-qm', 'vendored standards');
+  fs.appendFileSync(path.join(t.dir, 'README.md'), 'work in progress\n');
+  fs.writeFileSync(path.join(root, 'standards', 'build.md'), '# Build standards\n\nv3\n');
+  const vEnv = (...a) => spawnSync(process.execPath, [path.join(HERE, 'scripts', 'vendor.mjs'), ...a, '--root', root], {encoding: 'utf8', env: ENV});
+  const hooked = vEnv('sync', '--all', '--commit', '--hook');
+  assert.equal(hooked.status, 0, hooked.stderr);
+  assert.match(JSON.parse(hooked.stdout).systemMessage, /Synced shared files into tools and committed them: uses-standards\/reference\/build-standards\.md/);
+  assert.match(git('log', '-1', '--name-only', '--format=%s').stdout, /^Sync shared files from their source\n\nreference\/build-standards\.md/);
+  assert.match(git('status', '--porcelain').stdout, /^ M README\.md$/m, 'work in progress left uncommitted');
+  assert.equal(vEnv('sync', '--all', '--commit', '--hook').stdout, '', 'silent when nothing changed');
+
+  // A copy edited in place is held, never overwritten.
+  fs.writeFileSync(path.join(t.dir, 'reference', 'build-standards.md'), 'my own edit\n');
+  fs.writeFileSync(path.join(root, 'standards', 'build.md'), '# Build standards\n\nv4\n');
+  const held = vEnv('sync', '--all', '--commit', '--hook');
+  assert.match(JSON.parse(held.stdout).systemMessage, /Needs you: uses-standards\/reference\/build-standards\.md has uncommitted edits/);
+  assert.equal(fs.readFileSync(path.join(t.dir, 'reference', 'build-standards.md'), 'utf8'), 'my own edit\n');
+  git('checkout', '--', 'reference/build-standards.md');
+  fs.writeFileSync(path.join(root, 'standards', 'build.md'), '# Build standards\n\nv2\n');
+  vEnv('sync', '--all', '--commit');
+
   // Handed over: the whole standards folder is absent, which is normal.
   fs.rmSync(path.join(root, 'standards'), {recursive: true});
   assert.ok(!checkTool(t.dir).warns.some((w) => /vendored/.test(w)), 'quiet without the source folder');

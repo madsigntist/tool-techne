@@ -335,7 +335,10 @@ ZIP. `--publish` tags, pushes and creates the GitHub release.
 Files a tool copies from elsewhere, like a standards document kept once
 beside the tools, are listed in `vendored`. The check reports a copy whose
 source changed, and `node tool-techne/scripts/vendor.mjs sync <tool>`
-updates it. A source that is not on the computer at all, as in a
+updates it (`--commit` also commits the updated copies, only those files;
+`--hook` runs it quietly from a Claude Code hook, so no one has to remember).
+A copy with uncommitted edits of its own is held and reported, never
+overwritten. A source that is not on the computer at all, as in a
 handed-over copy, is not reported. **Checked (warning).**
 
 ## Upgrading a tool

@@ -3,6 +3,14 @@
 What changed in each release, for people using tool-techne. Defects and
 their causes are in [DEFECT-REGISTER.md](DEFECT-REGISTER.md).
 
+## 1.3.1
+
+- `vendor.mjs sync --commit` commits the updated copies in each tool, and
+  only those files. `--hook` makes it quiet for a Claude Code hook, so a
+  change to a shared document can reach every tool without anyone
+  remembering to sync.
+- A copy edited in place in a tool is held and reported, never overwritten.
+
 ## 1.3.0
 
 - **Tool standard 2.** `node tool-techne/scripts/upgrade.mjs <tool>` (or

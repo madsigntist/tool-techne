@@ -48,7 +48,9 @@ For a tool on an older standard (it has a `tool.json`).
 
 1. **AI** edit the source (the file the tools list in `vendored` `from`).
 2. **SCRIPT** `node scripts/vendor.mjs status`: which tools are behind.
-3. **SCRIPT** `node scripts/vendor.mjs sync --all`, then commit in each tool.
+3. **SCRIPT** `node scripts/vendor.mjs sync --all --commit`. To make it
+   automatic, run that with `--hook` from the SessionStart and Stop hooks of
+   the folder that holds the tools.
 
 ## Add a stack
 
