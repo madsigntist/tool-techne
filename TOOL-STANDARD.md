@@ -178,6 +178,11 @@ which carry that site's own public browser keys) lists those folders in
 says how many files it skipped. Never list a folder where the tool's own
 settings or credentials could land.
 
+A tool pushed to GitHub also turns on GitHub's secret scanning and push
+protection (free for public repos). The tool's own scan runs first, before
+anything leaves the computer; GitHub's catches more kinds of key. Not
+checked: it is a repository setting.
+
 ### 10. Runtime pinned
 
 A `node` tool sets `engines.node` in `package.json` (**checked**) and has a

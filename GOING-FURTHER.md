@@ -86,6 +86,12 @@ It builds `dist/<name>.zip` and proves it works on its own by running the
 tool's check in an unzipped copy. Folders of your own records or client
 work go in `tool.json` `releaseExclude`, so they stay out of the ZIP.
 
+Putting a tool on GitHub? Turn on **secret scanning** and **push
+protection** in the repo's Settings, under Security. They are free for
+public repos, and they stop a push that contains a known kind of key. The
+tool's own check stays the first line, because it runs before anything
+leaves your computer.
+
 ## Keeping tools up to date
 
 After updating tool-techne, bring each tool up to its standard:
