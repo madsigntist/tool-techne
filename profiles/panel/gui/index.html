@@ -5,98 +5,374 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{TITLE}}</title>
   <style>
+    /* ================================
+       TOKENS
+       ================================ */
+    /* Color, type and spacing tokens from IBM Carbon v11 (Apache-2.0):
+       White theme for light, Gray 100 for dark. Color values live here
+       and nowhere else. */
     :root {
-      --bg: #f7f7f5;
-      --surface: #ffffff;
-      --text: #1d1d1b;
-      --muted: #5f5f5a;
-      --line: #d9d9d4;
-      --accent: #2456c9;
-      --accent-text: #ffffff;
+      color-scheme: light dark;
+      --background: #ffffff;
+      --layer-01: #f4f4f4;
+      --layer-hover-01: #e8e8e8;
+      --border-subtle-01: #c6c6c6;
+      --border-strong-01: #8d8d8d;
+      --text-primary: #161616;
+      --text-secondary: #525252;
+      --text-helper: #6f6f6f;
+      --text-on-color: #ffffff;
+      --text-error: #da1e28;
+      --interactive: #0f62fe;
+      --focus: #0f62fe;
+      --button-primary: #0f62fe;
+      --button-primary-hover: #0050e6;
+      --button-danger: #da1e28;
+      --button-danger-hover: #b81921;
+      --overlay: #00000099;
+      --status-red: #da1e28;
+      --status-green: #24a148;
+      --status-blue: #0043ce;
+      --status-gray: #6f6f6f;
+
+      --spacing-02: 0.25rem;
+      --spacing-03: 0.5rem;
+      --spacing-04: 0.75rem;
+      --spacing-05: 1rem;
+      --spacing-06: 1.5rem;
+      --spacing-07: 2rem;
+
+      --radius: 0.25rem;
+      --control-md: 2.5rem;
+      --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
       --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+      --ease: cubic-bezier(0.2, 0, 0.38, 0.9);
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #161615;
-        --surface: #20201e;
-        --text: #ececea;
-        --muted: #a3a39d;
-        --line: #3a3a37;
-        --accent: #7aa2ff;
-        --accent-text: #0d0d0c;
+        --background: #0b0d0f;
+        --layer-01: #262626;
+        --layer-hover-01: #333333;
+        --border-subtle-01: #525252;
+        --border-strong-01: #6f6f6f;
+        --text-primary: #f4f4f4;
+        --text-secondary: #c6c6c6;
+        --text-helper: #a8a8a8;
+        --text-error: #ff8389;
+        --interactive: #4589ff;
+        --focus: #ffffff;
+        --status-red: #fa4d56;
+        --status-green: #42be65;
+        --status-blue: #4589ff;
+        --status-gray: #8d8d8d;
       }
     }
-    * { box-sizing: border-box; }
+
+    /* ================================
+       BASE
+       ================================ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font: 1rem/1.5 system-ui, sans-serif;
+      background: var(--background);
+      color: var(--text-primary);
+      font-family: var(--sans);
+      font-size: 0.875rem; /* body-01 */
+      line-height: 1.25rem;
+      letter-spacing: 0.16px;
     }
-    .panel { max-width: 60rem; margin: 0 auto; padding: 1.5rem 1rem; }
-    .panel__head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-    .panel__title { font-size: 1.25rem; margin: 0; }
-    .panel__card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 0.5rem;
-      padding: 1rem;
-      margin-top: 1rem;
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: -2px;
     }
-    .panel__row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
-    .panel__btn {
+
+    /* ================================
+       PANEL
+       ================================ */
+    .panel {
+      max-width: 60rem;
+      margin: 0 auto;
+      padding: var(--spacing-06) var(--spacing-05);
+    }
+    .panel__head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--spacing-05);
+    }
+    .panel__head > * {
+      min-width: 0;
+    }
+    .panel__title {
+      margin: 0;
+      font-size: 1.75rem; /* heading-04 */
+      line-height: 2.25rem;
+      font-weight: 400;
+    }
+    .panel__section {
+      border-radius: var(--radius);
+      margin-top: var(--spacing-05);
+      padding: var(--spacing-05);
+      background: var(--layer-01);
+    }
+    .panel__heading {
+      margin: 0 0 var(--spacing-05);
+      font-size: 1rem; /* heading-compact-02 */
+      line-height: 1.375rem;
+      font-weight: 600;
+    }
+    .panel__section .panel__head .panel__heading {
+      margin-bottom: 0;
+    }
+    .panel__field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-03);
+      max-width: 20rem;
+    }
+    .panel__label {
+      color: var(--text-secondary);
+      font-size: 0.75rem; /* label-01 */
+      line-height: 1rem;
+      letter-spacing: 0.32px;
+    }
+    .panel__select {
+      border-radius: var(--radius);
+      height: var(--control-md);
+      padding: 0 var(--spacing-05);
+      border: 0;
+      border-bottom: 1px solid var(--border-strong-01);
+      background: var(--background);
+      color: var(--text-primary);
       font: inherit;
-      padding: 0.4rem 0.9rem;
-      border-radius: 0.375rem;
-      border: 1px solid var(--line);
-      background: var(--surface);
-      color: var(--text);
-      cursor: pointer;
     }
-    .panel__btn:hover { border-color: var(--accent); color: var(--text); }
-    .panel__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .panel__btn--primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
-    .panel__btn--primary:hover { color: var(--accent-text); }
+    .panel__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-05);
+      margin-top: var(--spacing-05);
+    }
+    .panel__status {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-03);
+      margin: var(--spacing-05) 0;
+      color: var(--text-secondary);
+    }
     .panel__out {
-      font-family: var(--mono);
-      font-size: 0.875rem;
-      white-space: pre-wrap;
+      border-radius: var(--radius);
       min-height: 12rem;
       max-height: 60vh;
-      overflow: auto;
       margin: 0;
+      padding: var(--spacing-05);
+      overflow: auto;
+      background: var(--background);
+      font-family: var(--mono);
+      font-size: 0.75rem; /* code-01 */
+      line-height: 1rem;
+      letter-spacing: 0.32px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
     }
-    .panel__muted { color: var(--muted); }
+
+    /* ================================
+       BUTTON
+       ================================ */
+    /* Carbon hierarchy: primary, tertiary (outlined), ghost; danger in
+       each. One primary per screen. */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--control-md);
+      padding: 0 var(--spacing-05);
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--interactive);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color 110ms var(--ease);
+    }
+    .btn:hover {
+      background: var(--layer-hover-01);
+      color: var(--interactive);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn--primary {
+      background: var(--button-primary);
+      color: var(--text-on-color);
+    }
+    .btn--primary:hover {
+      background: var(--button-primary-hover);
+      color: var(--text-on-color);
+    }
+    .btn--tertiary {
+      border-color: var(--interactive);
+    }
+    .btn--danger {
+      border-color: var(--button-danger);
+      color: var(--text-error);
+    }
+    .btn--danger:hover {
+      background: var(--button-danger-hover);
+      color: var(--text-on-color);
+    }
+    .btn--danger-primary {
+      background: var(--button-danger);
+      color: var(--text-on-color);
+    }
+    .btn--danger-primary:hover {
+      background: var(--button-danger-hover);
+      color: var(--text-on-color);
+    }
+
+    /* ================================
+       STATUS
+       ================================ */
+    /* Shape indicator: color, shape and the text beside it. */
+    .status-shape {
+      flex-shrink: 0;
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 50%;
+      background: var(--status-gray);
+    }
+    .status-shape--running {
+      background: var(--status-blue);
+      border-radius: 0;
+    }
+    .status-shape--ok {
+      background: var(--status-green);
+    }
+    .status-shape--error {
+      background: var(--status-red);
+      border-radius: 0;
+      transform: rotate(45deg);
+    }
+
+    /* ================================
+       DIALOG
+       ================================ */
+    .dialog {
+      border-radius: var(--radius);
+      width: min(30rem, calc(100vw - 2rem));
+      padding: 0;
+      border: 0;
+      background: var(--layer-01);
+      color: var(--text-primary);
+    }
+    .dialog::backdrop {
+      background: var(--overlay);
+    }
+    .dialog__body {
+      padding: var(--spacing-05);
+    }
+    .dialog__title {
+      margin: 0 0 var(--spacing-05);
+      font-size: 1.25rem; /* heading-03 */
+      line-height: 1.75rem;
+      font-weight: 400;
+    }
+    .dialog__input {
+      border-radius: var(--radius);
+      width: 100%;
+      height: var(--control-md);
+      margin-top: var(--spacing-03);
+      padding: 0 var(--spacing-05);
+      border: 0;
+      border-bottom: 1px solid var(--border-strong-01);
+      background: var(--background);
+      color: var(--text-primary);
+      font: inherit;
+    }
+    .dialog__actions {
+      display: grid;
+      overflow: hidden;
+      border-radius: 0 0 var(--radius) var(--radius);
+      grid-template-columns: 1fr 1fr;
+    }
+    .dialog__actions .btn {
+      border-radius: 0;
+      min-height: 4rem;
+      align-items: flex-start;
+      padding-top: var(--spacing-05);
+    }
+
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- PANEL -->
   <main class="panel">
-    <div class="panel__head">
+    <header class="panel__head">
       <h1 class="panel__title">{{TITLE}}</h1>
-      <button class="panel__btn" id="shutdown" type="button">Shut down</button>
-    </div>
+      <button class="btn" id="shutdown" type="button">Shut down</button>
+    </header>
 
-    <section class="panel__card" aria-labelledby="run-h">
-      <h2 id="run-h" class="panel__title">Run</h2>
-      <div class="panel__row">
-        <label for="record">Record</label>
-        <select id="record"><option value="">(none)</option></select>
+    <!-- RUN -->
+    <section class="panel__section" aria-labelledby="run-h">
+      <h2 id="run-h" class="panel__heading">Run</h2>
+      <div class="panel__field">
+        <label class="panel__label" for="record">Record</label>
+        <select class="panel__select" id="record">
+          <option value="">(none)</option>
+        </select>
       </div>
-      <div class="panel__row" id="actions" style="margin-top: 0.75rem"></div>
+      <div class="panel__actions" id="actions"></div>
     </section>
 
-    <section class="panel__card" aria-labelledby="out-h">
+    <!-- OUTPUT -->
+    <section class="panel__section" aria-labelledby="out-h">
       <div class="panel__head">
-        <h2 id="out-h" class="panel__title">Output</h2>
-        <button class="panel__btn" id="stop" type="button">Stop</button>
+        <h2 id="out-h" class="panel__heading">Output</h2>
+        <button class="btn btn--danger" id="stop" type="button" disabled>
+          Stop job
+        </button>
       </div>
-      <p class="panel__muted" id="status" role="status">Nothing run yet.</p>
-      <pre class="panel__out" id="out" tabindex="0" aria-labelledby="out-h"></pre>
+      <p class="panel__status">
+        <span class="status-shape" id="shape" aria-hidden="true"></span>
+        <span id="status" role="status">Nothing run yet.</span>
+      </p>
+      <pre class="panel__out" id="out" tabindex="0"
+        aria-labelledby="out-h"></pre>
     </section>
   </main>
+
+  <!-- CONFIRM -->
+  <dialog class="dialog" id="confirm" aria-labelledby="confirm-h">
+    <form method="dialog">
+      <div class="dialog__body">
+        <h2 class="dialog__title" id="confirm-h">Run this action?</h2>
+        <label class="panel__label" for="confirm-input">
+          This reaches outside the computer. Type the record name to
+          confirm.
+        </label>
+        <input class="dialog__input" id="confirm-input" autocomplete="off">
+      </div>
+      <div class="dialog__actions">
+        <button class="btn" value="cancel" type="submit">Cancel</button>
+        <button class="btn btn--danger-primary" value="ok" type="submit"
+          id="confirm-ok">Run</button>
+      </div>
+    </form>
+  </dialog>
 
   <script>
     (function () {
@@ -105,6 +381,37 @@
       const out = document.getElementById('out');
       const recordSel = document.getElementById('record');
       const status = document.getElementById('status');
+      const shape = document.getElementById('shape');
+      const stopBtn = document.getElementById('stop');
+      const dialog = document.getElementById('confirm');
+      const confirmInput = document.getElementById('confirm-input');
+
+      /**
+       * Shows the job state as text and as a status shape.
+       * @param {string} state One of idle, running, ok, error.
+       * @param {string} text What happened, in plain words.
+       */
+      function setStatus(state, text) {
+        shape.className = `status-shape status-shape--${state}`;
+        status.textContent = text;
+      }
+
+      /**
+       * Asks for the record name before a live action.
+       * @param {string} action The action's name.
+       * @return {!Promise<?string>} The typed name, or null if cancelled.
+       */
+      function confirmLive(action) {
+        document.getElementById('confirm-h').textContent = `Run ${action}?`;
+        document.getElementById('confirm-ok').textContent = `Run ${action}`;
+        confirmInput.value = '';
+        dialog.showModal();
+        return new Promise((resolve) => {
+          dialog.addEventListener('close', () => {
+            resolve(dialog.returnValue === 'ok' ? confirmInput.value : null);
+          }, {once: true});
+        });
+      }
 
       /**
        * Runs one action and streams its output into the panel.
@@ -116,10 +423,15 @@
         const record = recordSel.value || undefined;
         const body = {action, record};
         if (live) {
-          body.confirm = window.prompt(`${action} is live. Type the record name to confirm.`) || '';
+          const typed = await confirmLive(action);
+          if (typed === null) {
+            return;
+          }
+          body.confirm = typed;
         }
         out.textContent = '';
-        status.textContent = `Running ${action}.`;
+        setStatus('running', `Running ${action}.`);
+        stopBtn.disabled = false;
         try {
           const res = await fetch('/api/run', {
             method: 'POST',
@@ -127,54 +439,66 @@
             body: JSON.stringify(body),
           });
           if (!res.ok) {
-            out.textContent = (await res.json()).error;
-            status.textContent = `${action} did not start.`;
+            const {error} = await res.json();
+            setStatus('error', `${action} did not start: ${error}`);
             return;
           }
           const reader = res.body.getReader();
           const dec = new TextDecoder();
           for (;;) {
             const {done, value} = await reader.read();
-            if (done) break;
+            if (done) {
+              break;
+            }
             out.textContent += dec.decode(value);
             out.scrollTop = out.scrollHeight;
           }
           const end = /\[exit ([^,\]]+)/.exec(out.textContent);
-          status.textContent = `${action} finished${end ? ` (exit ${end[1]})` : ''}.`;
+          const code = end ? end[1] : '';
+          if (code === '0') {
+            setStatus('ok', `${action} finished.`);
+          } else {
+            setStatus('error',
+                `${action} stopped (exit ${code || 'unknown'}). ` +
+                'The output above says why.');
+          }
         } catch (e) {
+          setStatus('error',
+              `${action} lost contact with the panel. Is it still running?`);
           out.textContent += `\n${e.message}`;
-          status.textContent = `${action} failed: ${e.message}`;
+        } finally {
+          stopBtn.disabled = true;
         }
       }
 
       /**
        * Loads records and actions from the server and draws the buttons.
+       * Actions are tertiary and live ones danger: none is the one primary.
        * @return {!Promise<void>}
        */
       async function load() {
         const state = await (await fetch('/api/state')).json();
-        for (const r of state.records) {
-          recordSel.add(new Option(r, r));
-        }
+        state.records.forEach((r) => recordSel.add(new Option(r, r)));
         const wrap = document.getElementById('actions');
-        for (const a of state.actions) {
+        state.actions.forEach((a) => {
           const live = state.live.includes(a);
           const b = document.createElement('button');
           b.type = 'button';
-          b.className = `panel__btn${live ? '' : ' panel__btn--primary'}`;
+          b.className = `btn ${live ? 'btn--danger' : 'btn--tertiary'}`;
           b.textContent = live ? `${a} (live)` : a;
           b.addEventListener('click', () => run(a, live));
           wrap.append(b);
-        }
+        });
       }
 
-      document.getElementById('stop').addEventListener('click', () => {
+      stopBtn.addEventListener('click', () => {
         fetch('/api/stop', {method: 'POST'});
       });
-      document.getElementById('shutdown').addEventListener('click', async () => {
-        await fetch('/api/shutdown', {method: 'POST'});
-        document.body.textContent = 'Panel shut down. Close this tab.';
-      });
+      document.getElementById('shutdown').addEventListener('click',
+          async () => {
+            await fetch('/api/shutdown', {method: 'POST'});
+            document.body.textContent = 'Panel shut down. Close this tab.';
+          });
 
       load();
     })();

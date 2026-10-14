@@ -248,6 +248,12 @@ Stack `node`.
 - Actions that touch something outside the computer go in a `LIVE` set and
   need the record's name typed to confirm.
 - Port: the next free one from 4870 up.
+- The page is built on IBM Carbon's tokens and usage rules, written by
+  hand: no Carbon package or CDN. The template's token block is the
+  starting palette (light and dark), and color values live only there.
+  One primary button per screen; live actions are danger buttons with a
+  typed confirmation. A workspace that keeps a fuller UI standard lists it
+  in the tool's `vendored`.
 
 ### cli: commands you type
 
