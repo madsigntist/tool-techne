@@ -14,6 +14,9 @@ Ask about anything you would otherwise guess. If the feature needs
 something this kind of tool cannot do (a page cannot act while it is
 closed), say so now, before any code.
 
+If it will take more than one session, start a plan first:
+[plan-a-long-feature.md](plan-a-long-feature.md).
+
 ## 2. Write down how you will check it
 
 Before writing the feature, add a test that fails because the feature is

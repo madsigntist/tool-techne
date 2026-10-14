@@ -29,6 +29,7 @@ The person may be new to code. Unless they ask for more detail:
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Changing how the parts fit together |
 | [ROADMAP.md](ROADMAP.md) | Before suggesting a change of direction. Settled decisions are listed there. Do not argue them again |
 | [guides/build-a-feature.md](guides/build-a-feature.md) | Adding anything to the tool: follow it step by step |
+| [guides/plan-a-long-feature.md](guides/plan-a-long-feature.md) | A feature that will take more than one session |
 | [DEFECT-REGISTER.md](DEFECT-REGISTER.md) | After fixing anything that broke |
 
 ## Rules
@@ -38,7 +39,8 @@ The person may be new to code. Unless they ask for more detail:
      the start of every session, so keep it under 250 lines. -->
 
 - **Write only inside this folder.** Read outside it only through the paths
-  in `tool.json` `reads`.
+  in `tool.json` `reads`. One exception: a feature's plan file, kept where
+  the person says (guides/plan-a-long-feature.md).
 - **No passwords or keys in files git keeps.** They go in `.env`, which is
   never committed. `scripts/check-secrets.mjs` fails the check if one gets
   through.

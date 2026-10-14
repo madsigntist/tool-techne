@@ -121,6 +121,11 @@ is reported. A tool whose rules are genuinely needed most sessions sets
 its own limit with `tool.json` `agentsMaxLines`, and says why in its
 ROADMAP decisions. **Checked (warning).**
 
+**A feature longer than one session gets a plan file**, outside the
+tool's repo and backed up (`guides/plan-a-long-feature.md`). A release
+ships the repo, and a plan names real records, so it is never committed
+in the tool. Settled things move from it into the documents above.
+
 **ROADMAP opens with settled decisions.** A decision not written down gets
 argued again. A missing heading is reported. **Checked (warning).**
 

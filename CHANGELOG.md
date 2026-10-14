@@ -3,6 +3,13 @@
 What changed in each release, for people using tool-techne. Defects and
 their causes are in [DEFECT-REGISTER.md](DEFECT-REGISTER.md).
 
+## Unreleased
+
+- **A plan for long features**, `guides/plan-a-long-feature.md` in new
+  tools: one file outside the tool's repo carries a feature across
+  sessions, assistants and model switches, with a usage row per session.
+  Existing tools can copy the guide from `skeleton/core/guides/`.
+
 ## 1.3.1
 
 - `vendor.mjs sync --commit` commits the updated copies in each tool, and
