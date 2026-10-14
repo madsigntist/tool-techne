@@ -259,7 +259,7 @@ manifest.standard = STANDARD;
 manifest.test = STACKS[stack].test;
 if (!port) delete manifest.portEnv;
 manifest.kit = [...KIT_DEFAULT];
-if (profile === 'panel') manifest.kit.push('panel-core');
+if (profile === 'panel') manifest.kit.push('panel-core', 'check-colors');
 if (guard) {
   manifest.guard = {open: ['data']};
   manifest.kit.push('tool-guard');

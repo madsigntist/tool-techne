@@ -54,6 +54,7 @@ export const KIT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 export const KIT = {
   'check': 'scripts/check.mjs',
   'check-secrets': 'scripts/check-secrets.mjs',
+  'check-colors': 'scripts/check-colors.mjs',
   'install': 'scripts/install.mjs',
   'lint-register-table': 'scripts/lint-register.mjs',
   'lint-register-fields': 'scripts/lint-register.mjs',
@@ -380,6 +381,16 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
     if (k.state === 'unknown') fails.push(`kit: no module named "${k.module}" (known: ${Object.keys(KIT).join(', ')})`);
     else if (k.state !== 'same') {
       fails.push(`kit: ${k.dest} ${k.state === 'missing' ? 'is missing' : 'differs from the kit'}: run node tool-techne/scripts/kit.mjs sync ${path.basename(dir)}`);
+    }
+  }
+
+  // Colors: a tool that carries check-colors keeps every color value in
+  // its token block. Run here so the tools check fails on it.
+  if (kit.includes('check-colors') && fs.existsSync(path.join(dir, KIT['check-colors']))) {
+    const r = spawnSync(process.execPath, [KIT['check-colors']], {cwd: dir, encoding: 'utf8'});
+    if (r.status !== 0) {
+      const n = (/(\d+) color value/.exec(r.stdout) || [])[1] || 'some';
+      fails.push(`colors: ${n} color value(s) outside the token block: run node scripts/check-colors.mjs in ${folder}`);
     }
   }
 

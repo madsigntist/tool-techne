@@ -341,7 +341,7 @@ test('kit: an edited copy fails the check, and sync repairs it', () => {
   const t = scaffold(root, ['--name', 'demo-kit', '--profile', 'panel', '--prefix', 'dk', '--node', '18']);
   assert.equal(t.status, 0, t.out);
   const m = JSON.parse(fs.readFileSync(path.join(t.dir, 'tool.json'), 'utf8'));
-  assert.deepEqual(m.kit, ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check', 'release', 'panel-core']);
+  assert.deepEqual(m.kit, ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check', 'release', 'panel-core', 'check-colors']);
   fs.appendFileSync(path.join(t.dir, 'gui', 'panel-core.mjs'), '\n// local edit\n');
   assert.ok(hasFail(checkTool(t.dir), /kit: gui\/panel-core\.mjs differs from the kit/));
   fs.rmSync(path.join(t.dir, 'scripts', 'check-secrets.mjs'));
@@ -354,6 +354,35 @@ test('kit: an edited copy fails the check, and sync repairs it', () => {
   const sync = spawnSync(process.execPath, [path.join(HERE, 'scripts', 'kit.mjs'), 'sync', 'demo-kit', '--root', root], {encoding: 'utf8'});
   assert.equal(sync.status, 0, sync.stdout + sync.stderr);
   assert.ok(!checkTool(t.dir).fails.some((f) => /^kit:/.test(f)), JSON.stringify(checkTool(t.dir).fails));
+});
+
+test('colors: a color value outside the token block fails, a token does not', () => {
+  const root = parentFolder();
+  const t = scaffold(root, ['--name', 'demo-colors', '--profile', 'panel', '--prefix', 'dc', '--node', '18']);
+  assert.equal(t.status, 0, t.out);
+  assert.equal(runIn(t.dir, 'scripts/check-colors.mjs').status, 0, 'the panel template keeps its colors in tokens');
+  const page = path.join(t.dir, 'gui', 'index.html');
+  const clean = fs.readFileSync(page, 'utf8');
+  // A new token, light and dark, is allowed.
+  const withStyle = (css) => clean.replace('</style>', `${css}\n  </style>`);
+  fs.writeFileSync(page, clean.replace(':root {', ':root {\n      --brand: #123456;')
+      .replace('</style>', ':root[data-theme="dark"] { --brand: rgb(1 2 3); }\n  </style>'));
+  assert.equal(runIn(t.dir, 'scripts/check-colors.mjs').status, 0, 'tokens in :root and [data-theme] pass');
+  // The same value in a component rule, inside @media, or inline, fails.
+  for (const bad of [
+    withStyle('.btn:hover { color: #bfdbfe; }'),
+    withStyle('@media (min-width: 40rem) { .panel { background: hsl(0 0% 10%); } }'),
+    clean.replace('<main class="panel">', '<main class="panel" style="color: rgba(0, 0, 0, 0.5)">'),
+  ]) {
+    fs.writeFileSync(page, bad);
+    const r = runIn(t.dir, 'scripts/check-colors.mjs');
+    assert.equal(r.status, 1, r.out);
+    assert.match(r.out, /1 color value\(s\) outside the token block/);
+    assert.ok(hasFail(checkTool(t.dir), /^colors: 1 color value/));
+  }
+  // A comment that names a color is not a finding.
+  fs.writeFileSync(page, withStyle('.x { /* was #fff */ color: var(--text-primary); }'));
+  assert.equal(runIn(t.dir, 'scripts/check-colors.mjs').status, 0);
 });
 
 /**
