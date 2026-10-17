@@ -30,6 +30,12 @@ scaffold, the stacks or the checks.
 
 ## Rules
 
+- **The tool exists to be correct, cheaper (tokens and time) and safe.**
+  Anything else is a feature, and a feature has to justify itself. Say
+  which of the three it serves before building it.
+- **A restriction has to justify itself too.** Allow anything, default
+  everything, and ask only what has no safe default. Every limit names the
+  failure it prevents, or it goes.
 - **The standard, the scaffold and the check move together.** A new rule
   in TOOL-STANDARD.md that can be checked gets a check in
   `scripts/lib/standard.mjs` and a positive-control test in

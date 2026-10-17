@@ -38,6 +38,12 @@ The person may be new to code. Unless they ask for more detail:
      with the reason. Detail goes in ARCHITECTURE.md. This file is read at
      the start of every session, so keep it under 250 lines. -->
 
+- **The tool exists to be correct, cheaper (tokens and time) and safe.**
+  Anything else is a feature, and a feature has to justify itself. Say
+  which of the three it serves before building it.
+- **A restriction has to justify itself too.** Allow anything, default
+  everything, and ask only what has no safe default. Every limit names the
+  failure it prevents, or it goes.
 - **Write only inside this folder.** Read outside it only through the paths
   in `tool.json` `reads`. One exception: a feature's plan file, kept where
   the person says (guides/plan-a-long-feature.md).

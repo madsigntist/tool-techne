@@ -11,6 +11,20 @@ The rest is judgment, and this file says which is which.
 Standard version: **2**. A tool's `tool.json` records the version it meets,
 and `node tool-techne/scripts/upgrade.mjs <tool>` brings it up to date.
 
+## Principles
+
+Everything below follows from these. They are judgment, not checked, so
+the skeleton's AGENTS.md and `guides/build-a-feature.md` put them where the
+decision is made.
+
+- **A tool exists to be correct, cheaper (tokens and time) and safe.**
+  Anything else is a feature, and a feature has to justify itself.
+- **A restriction has to justify itself too.** Allow anything, default
+  everything, and ask only what has no safe default. A restriction names the
+  failure it prevents, or it goes.
+- **Scripts do the mechanical work, the AI does judgment** (§13).
+- **Prefer a gate to a rule** (§8).
+
 ## Core: every tool
 
 ### 1. Its own repo, from the first commit

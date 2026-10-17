@@ -10,6 +10,11 @@ afterward, and how they will know it works. For example: "I can add a
 plant with how often it needs water. The page lists the plants due today
 at the top."
 
+Then say which it makes the tool: more correct, cheaper to run (fewer AI
+tokens, less time) or safer. If it is none of them, say so plainly and let
+the person decide whether it is still worth the upkeep. If it adds a choice,
+give the choice a default, so nobody has to answer it to get going.
+
 Ask about anything you would otherwise guess. If the feature needs
 something this kind of tool cannot do (a page cannot act while it is
 closed), say so now, before any code.

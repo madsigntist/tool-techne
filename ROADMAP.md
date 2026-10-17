@@ -76,6 +76,12 @@ person with those accounts.
   each turn's context: the limit exists for focus, not tokens.
 - 2026-10-09: **No panel in Python.** `panel-core` is the security-critical
   half of a panel, and one copy is easier to keep right than two.
+- 2026-10-16: **Principles head the standard: correct, cheaper, safe; a
+  feature and a restriction each justify themselves.** Judgment, so no
+  check and no `STANDARD` raise. They live where the decision is made
+  (skeleton AGENTS.md, build-a-feature step 1), and existing tools got the
+  two AGENTS lines by hand. "Ask only what has no safe default", not "ask
+  nothing": a guess that ships a wrong page is not a safe default.
 
 ## Next
 
