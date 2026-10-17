@@ -5,10 +5,20 @@ their causes are in [DEFECT-REGISTER.md](DEFECT-REGISTER.md).
 
 ## Unreleased
 
+- **Principles** at the top of TOOL-STANDARD.md. New tools' AGENTS.md and
+  `guides/build-a-feature.md` ask which of correct, cheaper or safe a
+  feature serves, and give every new choice a default. Existing tools can
+  copy the two rules from `skeleton/core/AGENTS.md`.
+
 - **A plan for long features**, `guides/plan-a-long-feature.md` in new
   tools: one file outside the tool's repo carries a feature across
   sessions, assistants and model switches, with a usage row per session.
   Existing tools can copy the guide from `skeleton/core/guides/`.
+
+- On Windows, a panel's jobs no longer open a console window over the
+  browser. `panel-core` and `setup-check` start every child process with
+  `windowsHide: true`; a detached panel has no console, so without it
+  Windows gave each job a new one.
 
 ## 1.3.1
 

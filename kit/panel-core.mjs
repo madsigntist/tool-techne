@@ -132,7 +132,7 @@ export function createJobs(root) {
   function stop() {
     if (!job) return false;
     if (process.platform === 'win32') {
-      spawn('taskkill', ['/PID', String(job.child.pid), '/T', '/F'], {stdio: 'ignore'});
+      spawn('taskkill', ['/PID', String(job.child.pid), '/T', '/F'], {stdio: 'ignore', windowsHide: true});
     } else {
       try {
         process.kill(-job.child.pid, 'SIGTERM');
@@ -165,6 +165,7 @@ export function createJobs(root) {
       cwd: root,
       env: {...process.env, FORCE_COLOR: '0'},
       detached: process.platform !== 'win32',
+      windowsHide: true,
     });
     job = {label, child, started: Date.now()};
     const out = (d) => res.write(d.toString().replace(/\x1b\[[0-9;]*m/g, ''));

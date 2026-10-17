@@ -29,6 +29,7 @@ try {
     cwd: ROOT,
     encoding: 'utf8',
     timeout: 20_000,
+    windowsHide: true,
   });
   if (r.status === 0) process.exit(0);
   const problems = (r.stdout || '')
