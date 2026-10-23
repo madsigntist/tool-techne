@@ -5,6 +5,11 @@ their causes are in [DEFECT-REGISTER.md](DEFECT-REGISTER.md).
 
 ## Unreleased
 
+- **Fix: the parent repo's ignore entry for a new tool is anchored**
+  (`/<name>/`). Unanchored, it also hid `feature-work/<name>/` plans from
+  the parent repo. A workspace with older entries can add the leading
+  slash by hand.
+
 - **Principles** at the top of TOOL-STANDARD.md. New tools' AGENTS.md and
   `guides/build-a-feature.md` ask which of correct, cheaper or safe a
   feature serves, and give every new choice a default. Existing tools can

@@ -296,11 +296,13 @@ for (const k of manifest.kit) {
 }
 console.log(`  OK    kit: ${manifest.kit.join(', ')}`);
 
-// A repo in the parent folder must not track the tool.
+// A repo in the parent folder must not track the tool. Anchored with a
+// leading slash, or it also ignores same-named folders deeper down, such
+// as a plan folder named after the tool.
 if (fs.existsSync(path.join(root, '.git'))) {
   const ignored = spawnSync('git', ['-C', root, 'check-ignore', '-q', `${name}/`]).status === 0;
   if (!ignored) {
-    fs.appendFileSync(path.join(root, '.gitignore'), `\n# ${title}: its own repo\n${name}/\n`);
+    fs.appendFileSync(path.join(root, '.gitignore'), `\n# ${title}: its own repo\n/${name}/\n`);
     console.log('  OK    added to the parent folder\'s .gitignore');
   }
 }

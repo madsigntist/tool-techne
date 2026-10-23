@@ -103,7 +103,10 @@ test('a node panel tool meets the standard and passes its own check, inside a pa
   assert.deepEqual(r.fails, []);
   assert.equal(r.manifest.stack, 'node');
   assert.equal(r.manifest.port, 4870);
-  assert.match(fs.readFileSync(path.join(root, '.gitignore'), 'utf8'), /^demo-panel\/$/m);
+  assert.match(fs.readFileSync(path.join(root, '.gitignore'), 'utf8'), /^\/demo-panel\/$/m);
+  // A same-named folder deeper in the parent (a feature plan) stays tracked.
+  const plan = spawnSync('git', ['check-ignore', '-q', 'feature-work/demo-panel/plan.md'], {cwd: root, env: ENV});
+  assert.equal(plan.status, 1, 'feature-work/demo-panel/ must not be ignored');
   assert.ok(fs.existsSync(path.join(t.dir, '.claude', 'commands', 'dp-panel.md')), 'command installed in the tool');
   const check = spawnSync('npm run check', {cwd: t.dir, encoding: 'utf8', env: ENV, shell: true});
   assert.equal(check.status, 0, check.stdout + check.stderr);
