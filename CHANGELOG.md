@@ -5,6 +5,13 @@ their causes are in [DEFECT-REGISTER.md](DEFECT-REGISTER.md).
 
 ## Unreleased
 
+- **Every tool with a port owns a hundred, panels included.** A new
+  panel takes the first port of the next unused hundred, as an app does,
+  instead of the next free port from 4870. `check-standard --all` fails
+  two tools in one hundred (two panels on 4870 and 4871 sat a digit
+  apart). A tool alone in a lower hundred keeps its port. `nextAppPort`
+  and `PANEL_PORT_START` are gone: `nextPort(used)` serves both.
+
 - **Each app owns a hundred of ports.** A new `app` takes the first port
   of the next unused hundred (4900, then 5100: round thousands are
   skipped), and panels skip app hundreds. `check-standard --all` fails a

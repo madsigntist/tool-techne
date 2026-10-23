@@ -50,7 +50,7 @@ path is written down.
   "profile": "page | panel | cli | app",
   "stack": "static | node | python",
   "shared": false,
-  "port": 4870,
+  "port": 4900,
   "portEnv": "XX_PORT",
   "commands": { "prefix": "xx", "install": "tool" },
   "docs": {
@@ -74,7 +74,7 @@ path is written down.
 | --- | --- |
 | `profile`, `stack` | How it is used and what it is written in. The stack must support the profile. **Checked** |
 | `shared` | Used by anyone other than its author. Requires `SECURITY.md`, recommends the guard. **Checked** |
-| `port` | `null` for a tool with no server. Unique among the tools in the same folder. **Checked** |
+| `port` | `null` for a tool with no server. Unique among the tools in the same folder, and alone in its hundred. **Checked** |
 | `commands.install` | Where `scripts/install.mjs` copies the slash commands: `tool`, `parent`, `user` or `none`. Installed copies must match the source. **Checked** |
 | `docs` | Where each document lives. Every path must exist. **Checked** |
 | `check` | The one command that runs every gate. Must exist. **Checked** |
@@ -261,7 +261,7 @@ Stack `node`.
 - One job at a time. Stop ends the whole process tree.
 - Actions that touch something outside the computer go in a `LIVE` set and
   need the record's name typed to confirm.
-- Port: the next free one from 4870 up, skipping any app's hundred.
+- Port: a hundred of its own, like an app (see app below).
 - The page is built on IBM Carbon's tokens and usage rules, written by
   hand: no Carbon package or CDN. The template's token block is the
   starting palette (light and dark), and color values live only there.
@@ -278,9 +278,13 @@ Stack `node` or `python`. No port.
 Stack `node` or `python`. Starts with `core/`, `modules/` and `deploy/`. Modules never
 import each other. Port: each app owns a hundred of its own (4900 to 4999,
 then 5100 to 5199, and so on), so it can add services beside its main port.
-Its port is the first of the next hundred no tool uses; round thousands
-(5000, 6000, 8000...) are skipped because other software claims them by
-default. No other tool's port may sit in an app's hundred.
+
+**Every tool with a port, panel or app, owns its hundred.** Its port is
+the first of the next hundred no tool uses; round thousands (5000, 6000,
+8000...) are skipped because other software claims them by default. No
+other tool's port may sit in its hundred, so no two tools are a digit
+apart. A tool already alone in a lower hundred (a shipped panel on 4870)
+keeps its port. **Checked.**
 
 ## Stacks
 

@@ -8,7 +8,7 @@ import path from 'node:path';
 import test from 'node:test';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {checkAll, checkTool, nextAppPort, nextPort} from '../scripts/lib/standard.mjs';
+import {checkAll, checkTool, nextPort} from '../scripts/lib/standard.mjs';
 import {extractZip} from '../scripts/lib/zip.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -102,7 +102,7 @@ test('a node panel tool meets the standard and passes its own check, inside a pa
   const r = checkTool(t.dir);
   assert.deepEqual(r.fails, []);
   assert.equal(r.manifest.stack, 'node');
-  assert.equal(r.manifest.port, 4870);
+  assert.equal(r.manifest.port, 4900);
   assert.match(fs.readFileSync(path.join(root, '.gitignore'), 'utf8'), /^\/demo-panel\/$/m);
   // A same-named folder deeper in the parent (a feature plan) stays tracked.
   const plan = spawnSync('git', ['check-ignore', '-q', 'feature-work/demo-panel/plan.md'], {cwd: root, env: ENV});
@@ -149,20 +149,17 @@ test('ports: the next tool takes the next free one, and a clash fails', () => {
   const root = parentFolder();
   scaffold(root, ['--name', 'tool-a', '--profile', 'panel', '--node', '18']);
   const b = scaffold(root, ['--name', 'tool-b', '--profile', 'panel', '--prefix', 'tb2', '--node', '18']);
-  assert.equal(checkTool(b.dir).manifest.port, 4871, b.out);
+  assert.equal(checkTool(b.dir).manifest.port, 5100, b.out);
   const m = JSON.parse(fs.readFileSync(path.join(b.dir, 'tool.json'), 'utf8'));
-  m.port = 4870;
+  m.port = 4900;
   fs.writeFileSync(path.join(b.dir, 'tool.json'), JSON.stringify(m));
-  assert.ok(checkAll(root).some((r) => hasFail(r, /port 4870 is also claimed/)));
-  assert.equal(nextPort([4870, 4871, 4873]), 4872);
+  assert.ok(checkAll(root).some((r) => hasFail(r, /port 4900 is also claimed/)));
 });
 
-test('ports: each app owns a hundred, skipping round thousands, and nothing else may sit in it', () => {
-  assert.equal(nextAppPort([4870, 4871]), 4900);
-  assert.equal(nextAppPort([4870, 4900]), 5100, '5000 is skipped');
-  assert.equal(nextAppPort([4870, 4900, 5100, 5150]), 5200);
-  const panels = Array.from({length: 30}, (_, i) => 4870 + i);
-  assert.equal(nextPort(panels, 4870, [4900]), 5000, 'a panel skips an app hundred');
+test('ports: each tool with a port owns a hundred, skipping round thousands, and nothing else may sit in it', () => {
+  assert.equal(nextPort([4870, 4871]), 4900);
+  assert.equal(nextPort([4870, 4900]), 5100, '5000 is skipped');
+  assert.equal(nextPort([4870, 4900, 5100, 5150]), 5200);
 
   const root = parentFolder();
   const a = scaffold(root, ['--name', 'app-one', '--profile', 'app', '--stack', 'node', '--prefix', 'ao', '--node', '18']);
@@ -172,15 +169,21 @@ test('ports: each app owns a hundred, skipping round thousands, and nothing else
   assert.equal(checkTool(b.dir).manifest.port, 5100, b.out);
   assert.deepEqual(checkAll(root).flatMap((r) => r.fails), []);
 
-  // A panel moved into an app's hundred fails, and so does the app.
+  // A panel takes a hundred of its own. Moved into another tool's hundred,
+  // it fails, and so does the tool already there.
   const p = scaffold(root, ['--name', 'side-panel', '--profile', 'panel', '--prefix', 'sp', '--node', '18']);
-  assert.equal(checkTool(p.dir).manifest.port, 4870, p.out);
+  assert.equal(checkTool(p.dir).manifest.port, 5200, p.out);
   const m = JSON.parse(fs.readFileSync(path.join(p.dir, 'tool.json'), 'utf8'));
   m.port = 4950;
   fs.writeFileSync(path.join(p.dir, 'tool.json'), JSON.stringify(m));
   const results = checkAll(root);
-  assert.ok(results.some((r) => hasFail(r, /port 4950 is inside 4900 to 4999, which the app app-one owns/)));
-  assert.ok(results.some((r) => hasFail(r, /an app owns its hundred of ports, and 4900 to 4999 also holds side-panel/)));
+  assert.ok(results.some((r) => hasFail(r, /owns its hundred, and 4900 to 4999 also holds app-one/)));
+  assert.ok(results.some((r) => hasFail(r, /owns its hundred, and 4900 to 4999 also holds side-panel/)));
+
+  // A tool alone in a lower hundred (a shipped 4870) keeps it.
+  m.port = 4870;
+  fs.writeFileSync(path.join(p.dir, 'tool.json'), JSON.stringify(m));
+  assert.deepEqual(checkAll(root).flatMap((r) => r.fails), []);
 });
 
 test('each broken part is caught', () => {

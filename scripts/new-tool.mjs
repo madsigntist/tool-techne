@@ -17,9 +17,9 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {
-  KIT, KIT_DEFAULT, KIT_DIR, NODE_FLOOR, PANEL_PORT_START, PROFILES, PYTHON_FLOOR,
+  KIT, KIT_DEFAULT, KIT_DIR, NODE_FLOOR, PROFILES, PYTHON_FLOOR,
   STACKS, STANDARD,
-  checkTool, defaultStack, discover, nextAppPort, nextPort, readManifest,
+  checkTool, defaultStack, discover, nextPort, readManifest,
 } from './lib/standard.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -123,8 +123,7 @@ if (prefixes.has(prefix)) {
   for (let n = 2; prefixes.has(prefix); n += 1) prefix = `${base}${n}`;
 }
 const used = siblings.map((m) => m.port).filter(Number.isInteger);
-const appPorts = siblings.filter((m) => m.profile === 'app').map((m) => m.port).filter(Number.isInteger);
-const port = {panel: nextPort(used, PANEL_PORT_START, appPorts), app: nextAppPort(used)}[profile] ?? null;
+const port = ['panel', 'app'].includes(profile) ? nextPort(used) : null;
 const portEnv = port ? `${prefix.toUpperCase()}_PORT` : '';
 
 const TOKENS = {

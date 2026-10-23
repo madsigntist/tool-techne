@@ -64,8 +64,9 @@ of the tool's scripts. Only your computer can open it.
 ## Port
 
 A number that tells your browser which program on your computer to talk
-to. A panel uses one, like `http://localhost:4870`. Two tools cannot share
-a port.
+to. A panel uses one, like `http://localhost:4900`. Each tool with a port
+gets a hundred of its own (4900, 5100, 5200...), so two tools never share
+one or sit a digit apart.
 
 ## Prefix
 

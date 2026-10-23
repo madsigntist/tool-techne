@@ -12,10 +12,11 @@ import {fileURLToPath} from 'node:url';
 
 export const STANDARD = 2;
 export const INSTALL_SCOPES = ['tool', 'parent', 'user', 'none'];
-export const PANEL_PORT_START = 4870;
-// Each app owns a hundred of ports (4900 to 4999, then 5100 to 5199...), so
-// it can add services beside its main port without meeting another tool.
-export const APP_PORT_START = 4900;
+// Each tool with a port (a panel or an app) owns a hundred of ports (4900 to
+// 4999, then 5100 to 5199...): an app can add services beside its main
+// port, and no two tools sit a digit apart, where one is easily mistaken for
+// the other. A tool already alone in a lower hundred (4870) keeps it.
+export const PORT_START = 4900;
 export const AGENTS_MD_MAX_LINES = 250;
 
 /**
@@ -144,27 +145,15 @@ export function hundredOf(port) {
 }
 
 /**
- * @param {!Array<number>} used Ports already taken.
- * @param {number=} start First port to try.
- * @param {!Array<number>=} reserved Ports of apps: their hundreds are skipped.
- * @return {number} The lowest free port from start up.
- */
-export function nextPort(used, start = PANEL_PORT_START, reserved = []) {
-  const owned = new Set(reserved.map(hundredOf));
-  let p = start;
-  while (used.includes(p) || owned.has(hundredOf(p))) p += 1;
-  return p;
-}
-
-/**
- * The first port of the next hundred no tool uses. Round thousands (5000,
- * 6000, 8000...) are skipped: other software claims them by default.
+ * The first port of the next hundred no tool uses, for a new panel or app.
+ * Round thousands (5000, 6000, 8000...) are skipped: other software claims
+ * them by default.
  * @param {!Array<number>} used Ports already taken, by any tool.
- * @return {number} The new app's port.
+ * @return {number} The new tool's port.
  */
-export function nextAppPort(used) {
+export function nextPort(used) {
   const taken = new Set(used.map(hundredOf));
-  let p = APP_PORT_START;
+  let p = PORT_START;
   while (taken.has(p) || p % 1000 === 0) p += 100;
   return p;
 }
@@ -340,11 +329,8 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
       const h = hundredOf(m.port);
       const range = `${h} to ${h + 99}`;
       const others = ((ctx.hundreds && ctx.hundreds.get(h)) || []).filter((t) => t.name !== name);
-      if (m.profile === 'app' && others.length) {
-        fails.push(`an app owns its hundred of ports, and ${range} also holds ${others.map((t) => t.name).join(', ')}`);
-      } else {
-        const app = others.find((t) => t.profile === 'app');
-        if (app) fails.push(`port ${m.port} is inside ${range}, which the app ${app.name} owns`);
+      if (others.length) {
+        fails.push(`each tool with a port owns its hundred, and ${range} also holds ${others.map((t) => t.name).join(', ')}. Move one to the first port of a free hundred`);
       }
     }
   } else if (m.profile === 'panel' || m.profile === 'app') {
