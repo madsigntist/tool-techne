@@ -5,6 +5,12 @@ their causes are in [DEFECT-REGISTER.md](DEFECT-REGISTER.md).
 
 ## Unreleased
 
+- **Each app owns a hundred of ports.** A new `app` takes the first port
+  of the next unused hundred (4900, then 5100: round thousands are
+  skipped), and panels skip app hundreds. `check-standard --all` fails a
+  tool whose port sits in another app's hundred. Before, a second app took
+  4901, beside the first.
+
 - **Fix: the parent repo's ignore entry for a new tool is anchored**
   (`/<name>/`). Unanchored, it also hid `feature-work/<name>/` plans from
   the parent repo. A workspace with older entries can add the leading

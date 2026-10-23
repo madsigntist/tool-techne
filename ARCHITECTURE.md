@@ -67,7 +67,7 @@ it, never tool-techne.
 | `PROFILE`, `PROFILE_LABEL` | `--profile`, and its plain description from `PROFILES` |
 | `STACK`, `STACK_LABEL` | `--stack` or the profile's default, and its label from `STACKS` |
 | `PREFIX` | `--prefix`, or the name's initials |
-| `PORT`, `PORT_ENV` | next free from 4870 (panel) or 4900 (app), `null` otherwise |
+| `PORT`, `PORT_ENV` | panel: next free from 4870, outside any app's hundred. app: the first port of the next unused hundred from 4900, round thousands skipped. `null` otherwise |
 | `NODE` | `--node`, or `NODE_FLOOR` (22) |
 | `PYTHON_FLOOR`, `PYTHON_VERSION` | 3.10, and the major.minor of the Python found when scaffolding a `python` tool |
 | `NEEDS`, `START_HOW` | The README's "What you need" (per stack) and "Start it" (per profile and stack) |

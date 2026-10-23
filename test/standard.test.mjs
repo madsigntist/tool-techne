@@ -8,7 +8,7 @@ import path from 'node:path';
 import test from 'node:test';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {checkAll, checkTool, nextPort} from '../scripts/lib/standard.mjs';
+import {checkAll, checkTool, nextAppPort, nextPort} from '../scripts/lib/standard.mjs';
 import {extractZip} from '../scripts/lib/zip.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -155,6 +155,32 @@ test('ports: the next tool takes the next free one, and a clash fails', () => {
   fs.writeFileSync(path.join(b.dir, 'tool.json'), JSON.stringify(m));
   assert.ok(checkAll(root).some((r) => hasFail(r, /port 4870 is also claimed/)));
   assert.equal(nextPort([4870, 4871, 4873]), 4872);
+});
+
+test('ports: each app owns a hundred, skipping round thousands, and nothing else may sit in it', () => {
+  assert.equal(nextAppPort([4870, 4871]), 4900);
+  assert.equal(nextAppPort([4870, 4900]), 5100, '5000 is skipped');
+  assert.equal(nextAppPort([4870, 4900, 5100, 5150]), 5200);
+  const panels = Array.from({length: 30}, (_, i) => 4870 + i);
+  assert.equal(nextPort(panels, 4870, [4900]), 5000, 'a panel skips an app hundred');
+
+  const root = parentFolder();
+  const a = scaffold(root, ['--name', 'app-one', '--profile', 'app', '--stack', 'node', '--prefix', 'ao', '--node', '18']);
+  assert.equal(a.status, 0, a.out);
+  const b = scaffold(root, ['--name', 'app-two', '--profile', 'app', '--stack', 'node', '--prefix', 'at', '--node', '18']);
+  assert.equal(checkTool(a.dir).manifest.port, 4900, a.out);
+  assert.equal(checkTool(b.dir).manifest.port, 5100, b.out);
+  assert.deepEqual(checkAll(root).flatMap((r) => r.fails), []);
+
+  // A panel moved into an app's hundred fails, and so does the app.
+  const p = scaffold(root, ['--name', 'side-panel', '--profile', 'panel', '--prefix', 'sp', '--node', '18']);
+  assert.equal(checkTool(p.dir).manifest.port, 4870, p.out);
+  const m = JSON.parse(fs.readFileSync(path.join(p.dir, 'tool.json'), 'utf8'));
+  m.port = 4950;
+  fs.writeFileSync(path.join(p.dir, 'tool.json'), JSON.stringify(m));
+  const results = checkAll(root);
+  assert.ok(results.some((r) => hasFail(r, /port 4950 is inside 4900 to 4999, which the app app-one owns/)));
+  assert.ok(results.some((r) => hasFail(r, /an app owns its hundred of ports, and 4900 to 4999 also holds side-panel/)));
 });
 
 test('each broken part is caught', () => {

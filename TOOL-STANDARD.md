@@ -261,7 +261,7 @@ Stack `node`.
 - One job at a time. Stop ends the whole process tree.
 - Actions that touch something outside the computer go in a `LIVE` set and
   need the record's name typed to confirm.
-- Port: the next free one from 4870 up.
+- Port: the next free one from 4870 up, skipping any app's hundred.
 - The page is built on IBM Carbon's tokens and usage rules, written by
   hand: no Carbon package or CDN. The template's token block is the
   starting palette (light and dark), and color values live only there.
@@ -276,7 +276,11 @@ Stack `node` or `python`. No port.
 ### app: a service that runs all the time
 
 Stack `node` or `python`. Starts with `core/`, `modules/` and `deploy/`. Modules never
-import each other. Port: the next free one from 4900 up.
+import each other. Port: each app owns a hundred of its own (4900 to 4999,
+then 5100 to 5199, and so on), so it can add services beside its main port.
+Its port is the first of the next hundred no tool uses; round thousands
+(5000, 6000, 8000...) are skipped because other software claims them by
+default. No other tool's port may sit in an app's hundred.
 
 ## Stacks
 

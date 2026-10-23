@@ -13,6 +13,8 @@ import {fileURLToPath} from 'node:url';
 export const STANDARD = 2;
 export const INSTALL_SCOPES = ['tool', 'parent', 'user', 'none'];
 export const PANEL_PORT_START = 4870;
+// Each app owns a hundred of ports (4900 to 4999, then 5100 to 5199...), so
+// it can add services beside its main port without meeting another tool.
 export const APP_PORT_START = 4900;
 export const AGENTS_MD_MAX_LINES = 250;
 
@@ -134,13 +136,36 @@ export function discover(root) {
 }
 
 /**
+ * @param {number} port A port.
+ * @return {number} The first port of the hundred it sits in.
+ */
+export function hundredOf(port) {
+  return Math.floor(port / 100) * 100;
+}
+
+/**
  * @param {!Array<number>} used Ports already taken.
  * @param {number=} start First port to try.
+ * @param {!Array<number>=} reserved Ports of apps: their hundreds are skipped.
  * @return {number} The lowest free port from start up.
  */
-export function nextPort(used, start = PANEL_PORT_START) {
+export function nextPort(used, start = PANEL_PORT_START, reserved = []) {
+  const owned = new Set(reserved.map(hundredOf));
   let p = start;
-  while (used.includes(p)) p += 1;
+  while (used.includes(p) || owned.has(hundredOf(p))) p += 1;
+  return p;
+}
+
+/**
+ * The first port of the next hundred no tool uses. Round thousands (5000,
+ * 6000, 8000...) are skipped: other software claims them by default.
+ * @param {!Array<number>} used Ports already taken, by any tool.
+ * @return {number} The new app's port.
+ */
+export function nextAppPort(used) {
+  const taken = new Set(used.map(hundredOf));
+  let p = APP_PORT_START;
+  while (taken.has(p) || p % 1000 === 0) p += 100;
   return p;
 }
 
@@ -159,8 +184,10 @@ function hooksOf(dir) {
 /**
  * Checks one tool against the standard.
  * @param {string} dir The tool folder.
- * @param {{ports: !Map<number, string>}=} ctx Ports claimed by other tools,
- *     for the uniqueness check across the parent folder.
+ * @param {{ports: !Map<number, string>,
+ *     hundreds: (!Map<number, !Array<{name: string, profile: string}>>|undefined)}=} ctx
+ *     Ports claimed by other tools, and which tools sit in each hundred,
+ *     for the checks across the parent folder.
  * @return {{dir: string, name: string, fails: !Array<string>,
  *     warns: !Array<string>, manifest: ?Object}} The findings.
  */
@@ -309,6 +336,16 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
     if (!Number.isInteger(m.port)) fails.push('tool.json: port must be a whole number or null');
     else if (ctx.ports.has(m.port) && ctx.ports.get(m.port) !== name) {
       fails.push(`port ${m.port} is also claimed by ${ctx.ports.get(m.port)}`);
+    } else {
+      const h = hundredOf(m.port);
+      const range = `${h} to ${h + 99}`;
+      const others = ((ctx.hundreds && ctx.hundreds.get(h)) || []).filter((t) => t.name !== name);
+      if (m.profile === 'app' && others.length) {
+        fails.push(`an app owns its hundred of ports, and ${range} also holds ${others.map((t) => t.name).join(', ')}`);
+      } else {
+        const app = others.find((t) => t.profile === 'app');
+        if (app) fails.push(`port ${m.port} is inside ${range}, which the app ${app.name} owns`);
+      }
     }
   } else if (m.profile === 'panel' || m.profile === 'app') {
     fails.push(`${m.profile} profile needs a port`);
@@ -413,13 +450,19 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
 export function checkAll(root) {
   const dirs = discover(root);
   const ports = new Map();
+  const hundreds = new Map();
   for (const d of dirs) {
     try {
       const m = readManifest(d);
-      if (m && Number.isInteger(m.port) && !ports.has(m.port)) ports.set(m.port, m.name || path.basename(d));
+      if (m && Number.isInteger(m.port)) {
+        const tool = {name: m.name || path.basename(d), profile: m.profile};
+        if (!ports.has(m.port)) ports.set(m.port, tool.name);
+        const h = hundredOf(m.port);
+        hundreds.set(h, [...(hundreds.get(h) || []), tool]);
+      }
     } catch {
       /* reported by checkTool */
     }
   }
-  return dirs.map((d) => checkTool(d, {ports}));
+  return dirs.map((d) => checkTool(d, {ports, hundreds}));
 }
