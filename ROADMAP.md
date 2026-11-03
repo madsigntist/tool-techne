@@ -9,6 +9,11 @@ person with those accounts.
 
 ## Decisions (settled, do not reopen)
 
+- 2026-11-03: **Every release gets a security review.** The changes since
+  the last release are reviewed (in Claude Code, `/security-review`) and
+  SECURITY.md updated before it ships. The skeleton's ROADMAP carries it as
+  a starting decision, so every new tool has it from day one.
+
 - 2026-10-09: **A template plus a scaffold script, not a written plan.** A
   plan in prose drifts. A skeleton that runs, and a check, do not.
 - 2026-10-09: **AGENTS.md is the one instruction file.** CLAUDE.md,

@@ -10,6 +10,10 @@
      here will be argued again. -->
 
 - {{DATE}}: Started from tool-techne as {{PROFILE_LABEL}}, in {{STACK_LABEL}}.
+- {{DATE}}: Every release gets a security review of the changes since the
+  last release before it ships (in Claude Code, `/security-review`), and
+  SECURITY.md is updated with what it finds. Part of the release steps, so
+  it is never left to memory.
 - {{DATE}}: [decision]. [why]
 
 ## Next
