@@ -3,9 +3,9 @@
 # every push. Free, no account. Runs on Linux only: Semgrep has no Windows
 # build.
 #
-# Warning mode: findings show in the log and the run stays green. Add
-# --error to the scan once the first findings are triaged. Accept a false
-# alarm with `// nosemgrep: <rule-id>` and a reason on that line.
+# Strict: any finding fails the run. Accept a false alarm with
+# `// nosemgrep: <rule-id>` and a reason on that line, never by removing
+# --error.
 name: semgrep
 
 on:
@@ -25,6 +25,6 @@ jobs:
       - uses: actions/checkout@v5
       - name: Scan
         run: >-
-          semgrep scan --metrics off
+          semgrep scan --metrics off --error
           --config p/javascript --config p/typescript
           --config p/nodejs --config p/secrets
