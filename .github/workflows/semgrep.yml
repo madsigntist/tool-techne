@@ -1,0 +1,30 @@
+# Semgrep: scans this tool's own code for risky patterns (shell commands
+# built from input, paths that escape a folder, raw HTML, keys in code) on
+# every push. Free, no account. Runs on Linux only: Semgrep has no Windows
+# build.
+#
+# Warning mode: findings show in the log and the run stays green. Add
+# --error to the scan once the first findings are triaged. Accept a false
+# alarm with `// nosemgrep: <rule-id>` and a reason on that line.
+name: semgrep
+
+on:
+  push:
+  pull_request:
+
+# Read-only token, and no repository secrets: the scanner is a third-party
+# image and needs neither.
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    container: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v5
+      - name: Scan
+        run: >-
+          semgrep scan --metrics off
+          --config p/javascript --config p/typescript
+          --config p/nodejs --config p/secrets

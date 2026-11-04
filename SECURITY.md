@@ -20,6 +20,11 @@ written to a file or printed.
 `npm install` from the npm registry for `package.json`, `pip install` from
 PyPI for `requirements.txt`. A new tool lists none.
 
+A new tool carries `.github/workflows/semgrep.yml`: on every push to
+GitHub, Semgrep scans the code for risky patterns on a GitHub runner, with
+a read-only token and no repository secrets. It downloads its rules from
+the Semgrep registry, with metrics off, and sends no code anywhere.
+
 No other script makes a network request. The panel profile's server, in
 tools that use it, listens on `127.0.0.1` only and refuses requests from
 other sites.

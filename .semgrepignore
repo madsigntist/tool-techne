@@ -1,0 +1,4 @@
+# What Semgrep skips: everything git ignores, plus code that is not ours.
+:include .gitignore
+node_modules/
+dist/
