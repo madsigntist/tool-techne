@@ -202,6 +202,19 @@ protection (free for public repos). The tool's own scan runs first, before
 anything leaves the computer; GitHub's catches more kinds of key. Not
 checked: it is a repository setting.
 
+### 9a. Packages are checked before and after they are added
+
+Before a package is added, the AI checks it is maintained: a release in
+the last year, and no security issue left open without an answer. An
+abandoned package is the one that gets dropped later, because nobody
+publishes the fix. Not checked: it is judgment.
+
+After it is added, `.github/workflows/security.yml` runs `npm audit` on
+every push and fails on a high or critical advisory, alongside Semgrep.
+The `release` command turns on GitHub's Dependabot alerts, which report a
+problem found later in a package already in use. Not checked by the
+standard: one is a GitHub run, the other a repository setting.
+
 ### 10. Runtime pinned
 
 A `node` tool sets `engines.node` in `package.json` (**checked**) and has a

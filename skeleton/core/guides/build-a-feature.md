@@ -37,6 +37,11 @@ and add them to RUNBOOK.md.
 Change as little as you can. Follow AGENTS.md and the documents it points
 to. Explain each change in a sentence as you make it.
 
+Before adding a package, check it is maintained: a release in the last
+year, and no security issue left open without an answer. Say what you
+found. An abandoned package is the one you end up dropping, because nobody
+publishes the fix.
+
 ## 4. Run the check
 
 ```

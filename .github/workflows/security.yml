@@ -1,0 +1,47 @@
+# Security checks on every push. Free, no account, nothing to run by hand.
+#
+# Semgrep: scans this tool's own code for risky patterns (shell commands
+# built from input, paths that escape a folder, raw HTML, keys in code).
+# Runs on Linux only: Semgrep has no Windows build.
+#
+# npm audit: checks every package in package-lock.json against npm's list
+# of known vulnerabilities, so a bad package is caught the day it is added,
+# not at release. Skipped when the tool has no package-lock.json.
+#
+# Strict: any Semgrep finding, or any high or critical advisory, fails the
+# run. Accept a Semgrep false alarm with `// nosemgrep: <rule-id>` and a
+# reason on that line. Fix an advisory by updating the package
+# (`npm audit fix`). Never remove --error or --audit-level.
+name: security
+
+on:
+  push:
+  pull_request:
+
+# Read-only token, and no repository secrets: neither check needs one.
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    container: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v5
+      - name: Scan
+        run: >-
+          semgrep scan --metrics off --error
+          --config p/javascript --config p/typescript
+          --config p/nodejs --config p/secrets
+
+  npm-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Audit
+        run: |
+          if [ -f package-lock.json ]; then
+            npm audit --audit-level=high
+          else
+            echo "No package-lock.json: nothing to audit."
+          fi
