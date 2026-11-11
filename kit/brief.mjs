@@ -155,6 +155,28 @@ function size(file, max) {
 }
 
 /**
+ * ROADMAP's size without its Decisions section, which grows for as long
+ * as the tool lives and is searched, not read whole. Kept equal to
+ * splitDecisions() in tool-techne's scripts/lib/standard.mjs.
+ * @param {string} file Path.
+ * @param {number} max Its budget in KB, for everything but Decisions.
+ * @return {string} As "12 KB plus Decisions 44 KB", flagged when over.
+ */
+function roadmapSize(file, max) {
+  const text = read(file);
+  if (!text) return 'missing';
+  const lines = text.split('\n');
+  const start = lines.findIndex((l) => /^## .*decision/i.test(l));
+  const rel = start < 0 ? -1 : lines.slice(start + 1).findIndex((l) => /^## /.test(l));
+  const end = start < 0 ? start : rel < 0 ? lines.length : start + 1 + rel;
+  const dec = start < 0 ? '' : lines.slice(start, end).join('\n');
+  const kb = Math.round((Buffer.byteLength(text) - Buffer.byteLength(dec)) / 1024);
+  const decKB = Math.round(Buffer.byteLength(dec) / 1024);
+  const flag = kb > max ? ` (OVER its ${max} KB budget)` : '';
+  return `${kb} KB${flag}${dec ? ` plus Decisions ${decKB} KB` : ''}`;
+}
+
+/**
  * @param {string} s Text.
  * @param {number} n Most characters.
  * @return {string} Cut to n, with an ellipsis when cut.
@@ -200,7 +222,7 @@ if (open.length) {
 
 out.push(
   '',
-  `Sizes: ${path.basename(roadmap)} ${size(roadmap, budget.roadmap)}, ${path.basename(register)} ${size(register, budget.register)}.`,
+  `Sizes: ${path.basename(roadmap)} ${roadmapSize(roadmap, budget.roadmap)}; ${path.basename(register)} ${size(register, budget.register)}.`,
   'Read a register section in full when working in its area; there is no need to read the whole file.',
 );
 const roadText = read(roadmap);

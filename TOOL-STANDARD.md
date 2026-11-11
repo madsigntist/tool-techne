@@ -157,8 +157,11 @@ is reported. **Checked (warning).**
 **Session documents have a size budget.** ROADMAP 40 KB, the register
 150 KB, set from six real tools whose ROADMAPs ran 4 to 133 KB and
 registers 11 to 290 KB. A session that reads them whole pays for every
-line, every time. Over budget is reported; a tool raises its own with
-`tool.json` `docMaxKB` and says why in its decisions.
+line, every time. ROADMAP's budget leaves out its Decisions section:
+decisions grow for as long as a tool lives and are searched, not read
+whole (the brief prints only their count), so they have no budget. Over
+budget is reported; a tool raises its own with `tool.json` `docMaxKB` and
+says why in its decisions.
 `check-standard.mjs --list` shows each tool's sizes. **Checked (warning).**
 
 **A session starts from `scripts/brief.mjs`, not from the whole files.**

@@ -12,7 +12,9 @@ their causes are in [DEFECT-REGISTER.md](DEFECT-REGISTER.md).
   SessionStart hook. `check-standard.mjs` warns on a ROADMAP over 40 KB or
   with more than 10 ticked boxes, a register over 150 KB, and a Decisions
   heading past the third section; `tool.json` `docMaxKB` raises a budget.
-  `--list` shows each tool's sizes. ROADMAP's order is now where to start,
+  `--list` shows each tool's sizes. The ROADMAP budget leaves out the
+  Decisions section, which grows for good and is searched, not read
+  whole; `--list` and the brief show its size apart. ROADMAP's order is now where to start,
   then Decisions, as the skeleton already had it. Existing tools add
   `"brief"` to `kit` and run `kit.mjs sync`.
 - **The feature plan template is leaner.** The check runs once at the

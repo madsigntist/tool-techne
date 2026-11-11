@@ -96,6 +96,7 @@ place it had to guess.
 | --- | --- | --- | --- | --- | --- | --- |
 | 7.1 | Sessions in the larger tools started by reading 75k to 99k tokens of ROADMAP and register, close to the cost of the work itself; three tools kept 68 to 131 ticked boxes of finished work in ROADMAP | "ROADMAP never holds finished work" was a written rule with no check, and nothing measured the size of the files every session was told to read. Only AGENTS.md had a limit | Size budgets (ROADMAP 40 KB, register 150 KB, `docMaxKB` to raise), a ticked-box limit and a Decisions-order check, all warnings in `check-standard.mjs`, sizes in `--list`. The `brief` kit module prints the start of a session in a page, and the skeleton's SessionStart hook runs it. Positive-controlled in `test/standard.test.mjs`. A RULE because over budget warns and does not fail | RULE | reviewer | no |
 | 7.2 | The standard did not list the `check-colors` kit module, and its example manifest and the skeleton's said `"standard": 1` after standard 2 | A kit module and a standard raise were made without the matching edit to TOOL-STANDARD.md and the skeleton; nothing compares them | Both corrected. The scaffolder already overwrote the number, so no tool was made wrong | POINT | reviewer | no |
+| 7.3 | A large tool's ROADMAP, pruned to no finished work, stayed over its 40 KB budget: its Decisions table alone was 44 KB, and the rules forbid rewording it. Raising `docMaxKB` would have to be repeated each time a decision is added | The budget counted the Decisions section, the one part of ROADMAP that grows for as long as a tool lives and that sessions search rather than read (the brief prints only the count) | `splitDecisions()` in `standard.mjs`: the ROADMAP budget measures everything but Decisions; `--list` and the brief show the Decisions size apart, with no budget. Positive-controlled in `test/standard.test.mjs` (a large Decisions does not warn, a large section after it does) | GATE | self-review | no |
 
 ---
 
@@ -113,6 +114,6 @@ Every row marked **Again?** = yes, and what that says about its tag.
 
 | | |
 | --- | --- |
-| Defects recorded | 23 |
-| Fixed by a gate or a generator | 18 |
+| Defects recorded | 24 |
+| Fixed by a gate or a generator | 19 |
 | Defect classes that recurred | 0 |

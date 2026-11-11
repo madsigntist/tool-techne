@@ -43,14 +43,15 @@ if (flag('--list')) {
       const m = readManifest(d);
       const s = docStats(d, m);
       return [m.name, m.profile, m.stack ?? '-', m.port ?? '-', m.shared ? 'yes' : 'no', m.standard, m.commands?.prefix ?? '-',
-        s.agentsLines, s.roadmapKB, s.ticked, s.registerKB];
+        s.agentsLines, s.roadmapKB, s.decisionsKB, s.ticked, s.registerKB];
     } catch {
-      return [path.basename(d), 'INVALID tool.json', '', '', '', '', '', '', '', '', ''];
+      return [path.basename(d), 'INVALID tool.json', '', '', '', '', '', '', '', '', '', ''];
     }
   });
   // Sizes of what a session is pointed at first: AGENTS.md lines, ROADMAP
-  // and register KB, and ROADMAP's ticked boxes (finished work kept).
-  const head = ['tool', 'profile', 'stack', 'port', 'shared', 'std', 'prefix', 'agents', 'roadmap KB', 'ticked', 'register KB'];
+  // KB without its Decisions (which have no budget), Decisions KB, ROADMAP's
+  // ticked boxes (finished work kept) and register KB.
+  const head = ['tool', 'profile', 'stack', 'port', 'shared', 'std', 'prefix', 'agents', 'roadmap KB', 'decisions KB', 'ticked', 'register KB'];
   const w = head.map((h, i) => Math.max(h.length, ...rows.map((r) => String(r[i]).length)));
   const line = (r) => r.map((c, i) => String(c).padEnd(w[i])).join('  ');
   console.log(`\n  ${line(head)}\n  ${w.map((n) => '-'.repeat(n)).join('  ')}`);

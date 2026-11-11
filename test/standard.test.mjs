@@ -704,8 +704,13 @@ test('session documents: size budgets, finished work and Decisions order are rep
   const rp = path.join(t.dir, 'ROADMAP.md');
   const fresh = fs.readFileSync(rp, 'utf8');
   fs.appendFileSync(rp, '\n## Done\n\n' + '- [x] a finished item\n'.repeat(11) + 'history line\n'.repeat(4000));
-  assert.ok(warns().some((w) => /ROADMAP\.md is \d+ KB \(over 40\)/.test(w)));
+  assert.ok(warns().some((w) => /ROADMAP\.md is \d+ KB without its Decisions \(over 40\)/.test(w)));
   assert.ok(warns().some((w) => /ROADMAP\.md holds 11 ticked boxes/.test(w)));
+
+  fs.writeFileSync(rp, fresh.replace(/^(## .*[Dd]ecision.*\n)/m, `$1\n${'| a | settled row |\n'.repeat(4000)}`));
+  assert.ok(!warns().some((w) => /ROADMAP\.md is \d+ KB/.test(w)), 'Decisions do not count toward the ROADMAP budget');
+  fs.writeFileSync(rp, `${fresh}\n## Later\n\n${'history line\n'.repeat(4000)}`);
+  assert.ok(warns().some((w) => /ROADMAP\.md is \d+ KB without its Decisions \(over 40\)/.test(w)), 'a section after Decisions still counts');
 
   fs.writeFileSync(rp, `# Roadmap\n\n## Start here\n\n## Next\n\n## Known gaps\n\n## Later\n\n${fresh.replace(/^# Roadmap\n/, '')}`);
   assert.ok(warns().some((w) => /Decisions is section \d+; it belongs among the first 3/.test(w)));

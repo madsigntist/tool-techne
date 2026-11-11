@@ -32,12 +32,37 @@ export const ROADMAP_MAX_TICKED = 10;
 export const DECISIONS_WITHIN = 3;
 
 /**
+ * Splits ROADMAP into its Decisions section and the rest. Decisions grow
+ * for as long as a tool lives and are searched, not read whole (the brief
+ * prints only their count), so the ROADMAP budget measures the rest.
+ * kit/brief.mjs keeps the same rule.
+ * @param {string} text ROADMAP's text.
+ * @return {{working: string, decisions: string}} The text outside the
+ *     first "## ...Decisions..." section, and that section.
+ */
+export function splitDecisions(text) {
+  const lines = text.split('\n');
+  const start = lines.findIndex((l) => /^## .*decision/i.test(l));
+  if (start < 0) {
+    return {working: text, decisions: ''};
+  }
+  const rel = lines.slice(start + 1).findIndex((l) => /^## /.test(l));
+  const end = rel < 0 ? lines.length : start + 1 + rel;
+  return {
+    working: [...lines.slice(0, start), ...lines.slice(end)].join('\n'),
+    decisions: lines.slice(start, end).join('\n'),
+  };
+}
+
+/**
  * Sizes and ticked boxes of a tool's session documents.
  * @param {string} dir A tool folder.
  * @param {?Object} m Its manifest.
- * @return {{agentsLines: number, roadmapKB: number, registerKB: number,
- *     ticked: number, decisionsAt: number}} decisionsAt is the 1-based
- *     section number of the Decisions heading, or 0 when there is none.
+ * @return {{agentsLines: number, roadmapKB: number, decisionsKB: number,
+ *     registerKB: number, ticked: number, decisionsAt: number}} roadmapKB
+ *     leaves out the Decisions section, which decisionsKB measures;
+ *     decisionsAt is the 1-based section number of the Decisions heading,
+ *     or 0 when there is none.
  */
 export function docStats(dir, m) {
   const docs = (m && m.docs) || {};
@@ -45,9 +70,11 @@ export function docStats(dir, m) {
   const kb = (rel) => (rel ? Math.round(Buffer.byteLength(readText(at(rel))) / 1024) : 0);
   const road = docs.roadmap ? readText(at(docs.roadmap)) : '';
   const heads = road.split('\n').filter((l) => /^## /.test(l));
+  const {working, decisions} = splitDecisions(road);
   return {
     agentsLines: docs.agents ? readText(at(docs.agents)).split('\n').length : 0,
-    roadmapKB: kb(docs.roadmap),
+    roadmapKB: Math.round(Buffer.byteLength(working) / 1024),
+    decisionsKB: Math.round(Buffer.byteLength(decisions) / 1024),
     registerKB: kb(docs.register),
     ticked: (road.match(/^\s*[-*] \[[xX]\]/gm) || []).length,
     decisionsAt: heads.findIndex((h) => /decision/i.test(h)) + 1,
@@ -283,7 +310,7 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
     fails.push(`tool.json: "docMaxKB" takes whole numbers for ${Object.keys(DOC_MAX_KB).join(' and ')}`);
   }
   if (docs.roadmap && stats.roadmapKB > budget.roadmap) {
-    warns.push(`${docs.roadmap} is ${stats.roadmapKB} KB (over ${budget.roadmap}): keep where to start, next steps and decisions; delete finished work (git keeps it), or set tool.json docMaxKB with a reason`);
+    warns.push(`${docs.roadmap} is ${stats.roadmapKB} KB without its Decisions (over ${budget.roadmap}): keep where to start, next steps and known gaps; delete finished work (git keeps it), or set tool.json docMaxKB with a reason`);
   }
   if (docs.register && stats.registerKB > budget.register) {
     warns.push(`${docs.register} is ${stats.registerKB} KB (over ${budget.register}): sessions should start from scripts/brief.mjs, not the whole file; set tool.json docMaxKB with a reason`);
