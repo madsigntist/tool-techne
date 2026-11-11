@@ -47,7 +47,12 @@ nothing:
 ## Rules for every session
 
 - Branch: `<feature branch>`. Commit at the end of each session.
-- Run `node scripts/check.mjs` before and after every change.
+- Run `node scripts/check.mjs` once at the start, so a failure you did
+  not cause is known, then after each change. The pre-commit hook runs
+  its quick half again on commit; that is enough.
+- Nothing in "Waiting on the person" below may wait more than one
+  session. If it has, the next session starts with it, not with the next
+  feature step.
 - Start a new session at every model switch, after any live run, and when
   a session has gone long.
 - End every session with the handoff, unasked: say the session is done,
@@ -58,7 +63,8 @@ nothing:
 
 ## Where we are (updated <date>)
 
-<What is done, in two or three lines.>
+<What is done, in two or three lines. Replace this each session; do not
+add to it.>
 
 | Next | Model | Needs first |
 | --- | --- | --- |
@@ -66,15 +72,30 @@ nothing:
 
 Next session prompt:
 
-    Read <full path to the tool>/AGENTS.md, then <full path to this file>.
-    Run <session>. Work on the branch <branch>. Follow the Rules in this file.
+    Run node scripts/brief.mjs in <full path to the tool>, then read
+    <full path to this file>. Run <session>. Work on the branch <branch>.
+    Follow the Rules in this file.
+
+(An assistant that does not load AGENTS.md by itself, such as a browser
+chat, is also told to read `<full path to the tool>/AGENTS.md` first.
+Claude Code, Codex, Gemini CLI and Copilot already load it.)
+
+## Waiting on the person
+
+Things only the person can do or confirm: a check by eye, a live run, an
+account setting, a token count. Each line names what is waiting on it.
+
+| Waiting for | Since | Blocks |
+| --- | --- | --- |
 
 ## Usage
 
-One row per session, at the handoff. Tokens or cost: `/cost` in Claude
-Code; write "not shown" where the assistant gives none.
+One row per session, at the handoff. Tokens or cost: `/cost` or the
+session counter in Claude Code. Ask the person for it rather than writing
+"not shown": a plan with no numbers cannot tell whether the feature made
+the tool cheaper. Note when the model used differs from the one planned.
 
-| Session | Assistant, model | Tokens or cost | Notes |
+| Session | Assistant, model (planned) | Tokens or cost | Notes |
 | --- | --- | --- | --- |
 
 ## Sessions
@@ -84,6 +105,9 @@ Code; write "not shown" where the assistant gives none.
 Status: not started
 Build: <what this session makes>
 Done when: <how anyone can tell>
+
+Once a session is done, cut its block to one line: its name, "done", the
+date, and anything later sessions must know. The detail is in git.
 
 ## Notes
 

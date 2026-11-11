@@ -36,6 +36,7 @@
     "install",
     "lint-register-table",
     "setup-check",
-    "release"
+    "release",
+    "brief"
   ]
 }

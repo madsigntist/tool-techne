@@ -14,7 +14,8 @@ and `node tool-techne/scripts/upgrade.mjs <tool>` brings it up to date.
 ## Principles
 
 Everything below follows from these. They are judgment, not checked, so
-the skeleton's AGENTS.md and `guides/build-a-feature.md` put them where the
+the skeleton's AGENTS.md and `guides/build-a-feature.md` (in every tool; the
+source is `skeleton/core/guides/`) put them where the
 decision is made.
 
 - **A tool exists to be correct, cheaper (tokens and time) and safe.**
@@ -43,7 +44,7 @@ path is written down.
 
 ```json
 {
-  "standard": 1,
+  "standard": 2,
   "name": "folder-name",
   "title": "Human name",
   "purpose": "One sentence: what it does and for whom.",
@@ -65,7 +66,7 @@ path is written down.
   "test": "node --test",
   "reads": [],
   "vendored": [],
-  "kit": ["check", "check-secrets", "install", "lint-register-table", "setup-check"],
+  "kit": ["check", "check-secrets", "install", "lint-register-table", "setup-check", "release", "brief"],
   "guard": null
 }
 ```
@@ -83,6 +84,8 @@ path is written down.
 | `vendored` | Files copied in from elsewhere: `{ "path", "from", "forked" }`. A copy that differs from its source is reported unless `forked: true` |
 | `kit` | The kit modules the tool uses (section 3). Each copy must match the kit. **Checked** |
 | `guard` | `null`, or `{ "open": ["data"] }` for the edit guard |
+| `agentsMaxLines` | Optional. A higher AGENTS.md limit than 250, with the reason in ROADMAP decisions (section 5). **Checked** |
+| `docMaxKB` | Optional. `{ "roadmap": n, "register": n }`: higher size budgets than 40 and 150 KB, with the reason in ROADMAP decisions (section 5). **Checked** |
 
 ### 3. Shared code comes from the kit
 
@@ -103,6 +106,8 @@ in one tool's copy.
 | `tool-guard` | `scripts/hooks/tool-guard.mjs` | the edit guard | |
 | `panel-core` | `gui/panel-core.mjs` | the panel's localhost check, job runner and detach | |
 | `release` | `scripts/release.mjs` | a ZIP of the tool, verified to work on its own, and publishing it | in new tools |
+| `brief` | `scripts/brief.mjs` | the start of a session in one page: ROADMAP's first section, the decision count, the register's index and the rows that can recur, sizes against budget | in new tools |
+| `check-colors` | `scripts/check-colors.mjs` | a panel's color values stay in its token block; the tools check runs it too | in new panels |
 
 The kit is written in Node.js whatever the tool's stack, so tool-techne
 keeps one copy of each check instead of one per language. Copies, not a
@@ -121,7 +126,7 @@ imported across folders.
 | `README.md` | someone meeting the tool | what it is, setup, how to start it | the step-by-step |
 | `RUNBOOK.md` | the person running it | each task start to finish, and what to do when something goes wrong | reasons |
 | `ARCHITECTURE.md` | the AI, when it needs it | the parts, the data, who writes what | rules |
-| `ROADMAP.md` | the next session | **Decisions** first, then where to start, next steps, known gaps | finished work as history |
+| `ROADMAP.md` | the next session | where to start, then **Decisions**, next steps, known gaps | finished work as history |
 | `AGENTS.md` | every AI assistant, every session | how to work with the person, the rules that are not obvious, a read-first table | explanation that belongs in ARCHITECTURE |
 | `DEFECT-REGISTER.md` | everyone | what broke, why, and whether it can again | dates as sections |
 | `SECURITY.md` | whoever checks a shared tool | passwords and keys, network, what it runs and changes | |
@@ -136,12 +141,33 @@ its own limit with `tool.json` `agentsMaxLines`, and says why in its
 ROADMAP decisions. **Checked (warning).**
 
 **A feature longer than one session gets a plan file**, outside the
-tool's repo and backed up (`guides/plan-a-long-feature.md`). A release
-ships the repo, and a plan names real records, so it is never committed
-in the tool. Settled things move from it into the documents above.
+tool's repo and backed up (`guides/plan-a-long-feature.md`, from
+`skeleton/core/guides/`). A release ships the repo, and a plan names real
+records, so it is never committed in the tool. Settled things move from it
+into the documents above.
 
-**ROADMAP opens with settled decisions.** A decision not written down gets
-argued again. A missing heading is reported. **Checked (warning).**
+**ROADMAP opens with where to start, then settled decisions.** A decision
+not written down gets argued again. A missing Decisions heading, or one
+past the third section, is reported. **Checked (warning).**
+
+**Finished work leaves ROADMAP.** It is deleted: git keeps the history,
+and a released tool lists it in `CHANGELOG.md`. More than 10 ticked boxes
+is reported. **Checked (warning).**
+
+**Session documents have a size budget.** ROADMAP 40 KB, the register
+150 KB, set from six real tools whose ROADMAPs ran 4 to 133 KB and
+registers 11 to 290 KB. A session that reads them whole pays for every
+line, every time. Over budget is reported; a tool raises its own with
+`tool.json` `docMaxKB` and says why in its decisions.
+`check-standard.mjs --list` shows each tool's sizes. **Checked (warning).**
+
+**A session starts from `scripts/brief.mjs`, not from the whole files.**
+It prints ROADMAP's first section, the decision count, the register's
+index and every row that can recur (RULE, POINT, OPEN), in about a page.
+The skeleton's Claude Code SessionStart hook runs it; other assistants
+are told to in AGENTS.md. The register is still read, one section at a
+time, for the area being changed. Not checked: whether a session reads
+more than it needs is judgment.
 
 ### 6. Every AI assistant finds the instructions
 

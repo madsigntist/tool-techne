@@ -2,12 +2,22 @@
 
 ## Start here (next session)
 
-v1.3.0 adds tool standard 2 and `upgrade.mjs`, a release script in every
-tool, `vendor.mjs` for shared documents, and the feature guide. Still open:
-testing the walkthrough on assistants other than Claude, which needs a
-person with those accounts.
+v1.3.1 is released; CHANGELOG "Unreleased" holds what comes next, the
+latest being the session brief and document budgets (2026-11-11). Still
+open: testing the walkthrough on assistants other than Claude, which needs
+a person with those accounts.
 
 ## Decisions (settled, do not reopen)
+
+- 2026-11-11: **Session documents have a size budget, and sessions start
+  from `brief.mjs`.** ROADMAP 40 KB, register 150 KB, 10 ticked boxes,
+  warnings only, raised per tool with `docMaxKB` and a reason. Evidence:
+  in six tools, ROADMAP ran 4 to 133 KB and the register 11 to 290 KB, and
+  the two largest started each session on about 75k and 99k tokens. This
+  adds to the 2026-10-09 AGENTS.md decision, which measured only AGENTS.md;
+  it does not reopen it. Warnings, not a `STANDARD` raise, so no tool fails.
+- 2026-11-11: **ROADMAP order is where to start, then Decisions.** The
+  skeleton and every tool already did this; the standard said the reverse.
 
 - 2026-11-03: **Every release gets a security review.** The changes since
   the last release are reviewed (in Claude Code, `/security-review`) and

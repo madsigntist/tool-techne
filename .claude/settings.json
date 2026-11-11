@@ -23,6 +23,12 @@
           },
           {
             "type": "command",
+            "command": "[ -f \"$CLAUDE_PROJECT_DIR/scripts/brief.mjs\" ] || exit 0; node \"$CLAUDE_PROJECT_DIR/scripts/brief.mjs\"",
+            "timeout": 30,
+            "statusMessage": "Reading where the work stands"
+          },
+          {
+            "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/check-standard.mjs\" --all --hook",
             "timeout": 60,
             "statusMessage": "Checking your tools"

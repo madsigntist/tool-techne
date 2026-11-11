@@ -18,6 +18,41 @@ export const INSTALL_SCOPES = ['tool', 'parent', 'user', 'none'];
 // the other. A tool already alone in a lower hundred (4870) keeps it.
 export const PORT_START = 4900;
 export const AGENTS_MD_MAX_LINES = 250;
+/**
+ * Size budgets, in KB, for the documents a session is pointed at first.
+ * Set from the spread across six real tools (2026-11-11): ROADMAP 4 to 133
+ * KB, the register 11 to 290 KB. Over budget is a warning; a tool raises
+ * its own with tool.json docMaxKB and says why in its ROADMAP decisions.
+ * kit/brief.mjs keeps the same numbers.
+ */
+export const DOC_MAX_KB = {roadmap: 40, register: 150};
+/** Ticked boxes ROADMAP may hold before finished work is reported. */
+export const ROADMAP_MAX_TICKED = 10;
+/** Decisions must be among ROADMAP's first this-many sections. */
+export const DECISIONS_WITHIN = 3;
+
+/**
+ * Sizes and ticked boxes of a tool's session documents.
+ * @param {string} dir A tool folder.
+ * @param {?Object} m Its manifest.
+ * @return {{agentsLines: number, roadmapKB: number, registerKB: number,
+ *     ticked: number, decisionsAt: number}} decisionsAt is the 1-based
+ *     section number of the Decisions heading, or 0 when there is none.
+ */
+export function docStats(dir, m) {
+  const docs = (m && m.docs) || {};
+  const at = (rel) => path.join(dir, String(rel || '').split('#')[0]);
+  const kb = (rel) => (rel ? Math.round(Buffer.byteLength(readText(at(rel))) / 1024) : 0);
+  const road = docs.roadmap ? readText(at(docs.roadmap)) : '';
+  const heads = road.split('\n').filter((l) => /^## /.test(l));
+  return {
+    agentsLines: docs.agents ? readText(at(docs.agents)).split('\n').length : 0,
+    roadmapKB: kb(docs.roadmap),
+    registerKB: kb(docs.register),
+    ticked: (road.match(/^\s*[-*] \[[xX]\]/gm) || []).length,
+    decisionsAt: heads.findIndex((h) => /decision/i.test(h)) + 1,
+  };
+}
 
 /**
  * How a tool is used. Plain-language labels are what START-HERE.md asks.
@@ -65,6 +100,7 @@ export const KIT = {
   'tool-guard': 'scripts/hooks/tool-guard.mjs',
   'panel-core': 'gui/panel-core.mjs',
   'release': 'scripts/release.mjs',
+  'brief': 'scripts/brief.mjs',
 };
 /**
  * Every tool carries these. The register lint is required too, but may be
@@ -73,7 +109,7 @@ export const KIT = {
  */
 export const KIT_REQUIRED = ['check', 'check-secrets', 'install'];
 /** What a new tool starts with. */
-export const KIT_DEFAULT = ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check', 'release'];
+export const KIT_DEFAULT = ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check', 'release', 'brief'];
 
 /** Files that point other AI assistants at AGENTS.md. */
 export const AI_POINTERS = ['CLAUDE.md', 'GEMINI.md', '.github/copilot-instructions.md'];
@@ -238,6 +274,25 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
   }
   if (docs.roadmap && !/^#+ .*decision/im.test(readText(at(docs.roadmap)))) {
     warns.push(`${docs.roadmap} has no "Decisions" heading`);
+  }
+  // Session documents stay small enough to start from (§5).
+  const stats = docStats(dir, m);
+  const budget = {...DOC_MAX_KB, ...(m.docMaxKB && typeof m.docMaxKB === 'object' ? m.docMaxKB : {})};
+  if (m.docMaxKB !== undefined && !(m.docMaxKB && typeof m.docMaxKB === 'object' &&
+      Object.entries(m.docMaxKB).every(([k, v]) => k in DOC_MAX_KB && Number.isInteger(v) && v > 0))) {
+    fails.push(`tool.json: "docMaxKB" takes whole numbers for ${Object.keys(DOC_MAX_KB).join(' and ')}`);
+  }
+  if (docs.roadmap && stats.roadmapKB > budget.roadmap) {
+    warns.push(`${docs.roadmap} is ${stats.roadmapKB} KB (over ${budget.roadmap}): keep where to start, next steps and decisions; delete finished work (git keeps it), or set tool.json docMaxKB with a reason`);
+  }
+  if (docs.register && stats.registerKB > budget.register) {
+    warns.push(`${docs.register} is ${stats.registerKB} KB (over ${budget.register}): sessions should start from scripts/brief.mjs, not the whole file; set tool.json docMaxKB with a reason`);
+  }
+  if (docs.roadmap && stats.ticked > ROADMAP_MAX_TICKED) {
+    warns.push(`${docs.roadmap} holds ${stats.ticked} ticked boxes (over ${ROADMAP_MAX_TICKED}): finished work is deleted, not kept as history`);
+  }
+  if (docs.roadmap && stats.decisionsAt > DECISIONS_WITHIN) {
+    warns.push(`${docs.roadmap}: Decisions is section ${stats.decisionsAt}; it belongs among the first ${DECISIONS_WITHIN}, after "Start here"`);
   }
 
   // Every AI assistant finds AGENTS.md.

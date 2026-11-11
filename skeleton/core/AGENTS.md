@@ -23,14 +23,19 @@ The person may be new to code. Unless they ask for more detail:
 
 ## Read first
 
+**Start every session with `node scripts/brief.mjs`.** It prints where the
+work stands, how many decisions are settled, and which defects can still
+come back, in a page. Read the files below only when the table says to,
+and only the part you need.
+
 | File | When |
 | --- | --- |
 | [RUNBOOK.md](RUNBOOK.md) | Doing any task that repeats |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Changing how the parts fit together |
-| [ROADMAP.md](ROADMAP.md) | Before suggesting a change of direction. Settled decisions are listed there. Do not argue them again |
+| [ROADMAP.md](ROADMAP.md) | Before suggesting a change of direction: search its Decisions. Settled decisions are not argued again |
 | [guides/build-a-feature.md](guides/build-a-feature.md) | Adding anything to the tool: follow it step by step |
 | [guides/plan-a-long-feature.md](guides/plan-a-long-feature.md) | A feature that will take more than one session |
-| [DEFECT-REGISTER.md](DEFECT-REGISTER.md) | After fixing anything that broke |
+| [DEFECT-REGISTER.md](DEFECT-REGISTER.md) | The section for the area you are changing, and after fixing anything that broke |
 
 ## Rules
 
@@ -58,6 +63,11 @@ The person may be new to code. Unless they ask for more detail:
 - **A pre-commit hook checks every commit** for secrets and a stale defect
   register. If it stops a commit, fix what it reports. Never use
   `--no-verify` to get past it unless the person decides to, knowing why.
+- **ROADMAP holds what is next, not what is done.** When something is
+  finished, delete it from ROADMAP: git keeps the history, and a released
+  tool lists it in CHANGELOG.md. A decision made along the way moves to
+  Decisions first. `scripts/brief.mjs` says when ROADMAP grows past its
+  budget.
 - **Workflows live in `guides/`**, as plain Markdown any AI can follow. A
   slash command in `commands/` is a short file that says which guide to
   follow. Its name starts with `{{PREFIX}}-`.

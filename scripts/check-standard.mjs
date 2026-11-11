@@ -17,7 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {checkAll, checkTool, discover, readManifest} from './lib/standard.mjs';
+import {checkAll, checkTool, discover, docStats, readManifest} from './lib/standard.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -41,12 +41,16 @@ if (flag('--list')) {
   const rows = discover(ROOT).map((d) => {
     try {
       const m = readManifest(d);
-      return [m.name, m.profile, m.stack ?? '-', m.port ?? '-', m.shared ? 'yes' : 'no', m.standard, m.commands?.prefix ?? '-'];
+      const s = docStats(d, m);
+      return [m.name, m.profile, m.stack ?? '-', m.port ?? '-', m.shared ? 'yes' : 'no', m.standard, m.commands?.prefix ?? '-',
+        s.agentsLines, s.roadmapKB, s.ticked, s.registerKB];
     } catch {
-      return [path.basename(d), 'INVALID tool.json', '', '', '', '', ''];
+      return [path.basename(d), 'INVALID tool.json', '', '', '', '', '', '', '', '', ''];
     }
   });
-  const head = ['tool', 'profile', 'stack', 'port', 'shared', 'std', 'prefix'];
+  // Sizes of what a session is pointed at first: AGENTS.md lines, ROADMAP
+  // and register KB, and ROADMAP's ticked boxes (finished work kept).
+  const head = ['tool', 'profile', 'stack', 'port', 'shared', 'std', 'prefix', 'agents', 'roadmap KB', 'ticked', 'register KB'];
   const w = head.map((h, i) => Math.max(h.length, ...rows.map((r) => String(r[i]).length)));
   const line = (r) => r.map((c, i) => String(c).padEnd(w[i])).join('  ');
   console.log(`\n  ${line(head)}\n  ${w.map((n) => '-'.repeat(n)).join('  ')}`);

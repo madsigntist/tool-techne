@@ -373,7 +373,7 @@ test('kit: an edited copy fails the check, and sync repairs it', () => {
   const t = scaffold(root, ['--name', 'demo-kit', '--profile', 'panel', '--prefix', 'dk', '--node', '18']);
   assert.equal(t.status, 0, t.out);
   const m = JSON.parse(fs.readFileSync(path.join(t.dir, 'tool.json'), 'utf8'));
-  assert.deepEqual(m.kit, ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check', 'release', 'panel-core', 'check-colors']);
+  assert.deepEqual(m.kit, ['check', 'check-secrets', 'install', 'lint-register-table', 'setup-check', 'release', 'brief', 'panel-core', 'check-colors']);
   fs.appendFileSync(path.join(t.dir, 'gui', 'panel-core.mjs'), '\n// local edit\n');
   assert.ok(hasFail(checkTool(t.dir), /kit: gui\/panel-core\.mjs differs from the kit/));
   fs.rmSync(path.join(t.dir, 'scripts', 'check-secrets.mjs'));
@@ -688,6 +688,61 @@ test('agentsMaxLines: a tool can set its own limit for AGENTS.md', () => {
   assert.ok(!checkTool(t.dir).warns.some((w) => /AGENTS\.md is/.test(w)));
   fs.writeFileSync(mp, JSON.stringify({...m, agentsMaxLines: 'lots'}, null, 2));
   assert.ok(hasFail(checkTool(t.dir), /agentsMaxLines" must be a whole number/));
+});
+
+test('session documents: size budgets, finished work and Decisions order are reported, docMaxKB raises a budget', () => {
+  const root = parentFolder();
+  const t = scaffold(root, ['--name', 'grown-docs', '--profile', 'page']);
+  const warns = () => checkTool(t.dir).warns;
+  assert.ok(!warns().some((w) => /KB \(over|ticked boxes|Decisions is section/.test(w)), 'a new tool is clean');
+
+  const rp = path.join(t.dir, 'ROADMAP.md');
+  const fresh = fs.readFileSync(rp, 'utf8');
+  fs.appendFileSync(rp, '\n## Done\n\n' + '- [x] a finished item\n'.repeat(11) + 'history line\n'.repeat(4000));
+  assert.ok(warns().some((w) => /ROADMAP\.md is \d+ KB \(over 40\)/.test(w)));
+  assert.ok(warns().some((w) => /ROADMAP\.md holds 11 ticked boxes/.test(w)));
+
+  fs.writeFileSync(rp, `# Roadmap\n\n## Start here\n\n## Next\n\n## Known gaps\n\n## Later\n\n${fresh.replace(/^# Roadmap\n/, '')}`);
+  assert.ok(warns().some((w) => /Decisions is section \d+; it belongs among the first 3/.test(w)));
+
+  const gp = path.join(t.dir, 'DEFECT-REGISTER.md');
+  fs.appendFileSync(gp, '\n<!-- padding -->\n' + 'x'.repeat(160 * 1024));
+  assert.ok(warns().some((w) => /DEFECT-REGISTER\.md is \d+ KB \(over 150\)/.test(w)));
+
+  const mp = path.join(t.dir, 'tool.json');
+  const m = JSON.parse(fs.readFileSync(mp, 'utf8'));
+  fs.writeFileSync(mp, JSON.stringify({...m, docMaxKB: {register: 400}}, null, 2));
+  assert.ok(!warns().some((w) => /DEFECT-REGISTER\.md is/.test(w)), 'docMaxKB raises the register budget');
+  fs.writeFileSync(mp, JSON.stringify({...m, docMaxKB: {roadmap: 'big'}}, null, 2));
+  assert.ok(hasFail(checkTool(t.dir), /docMaxKB" takes whole numbers/));
+});
+
+test('brief: a new tool carries it, and it reads both register shapes', () => {
+  const root = parentFolder();
+  const t = scaffold(root, ['--name', 'briefed', '--profile', 'cli']);
+  assert.equal(t.status, 0, t.out);
+  assert.ok(JSON.parse(fs.readFileSync(path.join(t.dir, 'tool.json'), 'utf8')).kit.includes('brief'));
+  assert.match(fs.readFileSync(path.join(t.dir, '.claude', 'settings.json'), 'utf8'), /scripts\/brief\.mjs/);
+
+  const gp = path.join(t.dir, 'DEFECT-REGISTER.md');
+  fs.writeFileSync(gp, [
+    '# Defect Register', '', '## 1. Table shape', '',
+    '| # | Problem | Root cause | Fix | Tag | Found by | Again? |',
+    '| --- | --- | --- | --- | --- | --- | --- |',
+    '| 1.1 | Gated thing | c | f | GATE | gate | no |',
+    '| 1.2 | Remembered thing | c | f | RULE | eye | yes |', '',
+    '## 2. Fields shape', '', '### A fixed-once thing', '',
+    '| Field | Detail |', '| --- | --- |', '| **Tag** | **POINT** |', '',
+    '## Recurrence audit', '', '| 1.2 | RULE | built a gate next |', '',
+  ].join('\n'));
+  const r = runIn(t.dir, 'scripts/brief.mjs');
+  assert.equal(r.status, 0, r.out);
+  assert.match(r.out, /Start here/);
+  assert.match(r.out, /DEFECT-REGISTER\.md: 3 defects/, 'the audit table is not counted');
+  assert.match(r.out, /By tag: GATE 1, RULE 1, POINT 1/);
+  assert.match(r.out, /RULE\s+1\. Table shape > 1\.2 Remembered thing/);
+  assert.match(r.out, /POINT\s+2\. Fields shape > A fixed-once thing/);
+  assert.doesNotMatch(r.out, /Gated thing/, 'a gated row is counted, not listed');
 });
 
 test('tool-techne meets its own standard, with or without .git', () => {

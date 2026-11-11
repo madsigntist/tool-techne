@@ -20,6 +20,12 @@
             "command": "[ -f \"$CLAUDE_PROJECT_DIR/scripts/hooks/setup-check.mjs\" ] || exit 0; node \"$CLAUDE_PROJECT_DIR/scripts/hooks/setup-check.mjs\"",
             "timeout": 30,
             "statusMessage": "Checking the tool is set up"
+          },
+          {
+            "type": "command",
+            "command": "[ -f \"$CLAUDE_PROJECT_DIR/scripts/brief.mjs\" ] || exit 0; node \"$CLAUDE_PROJECT_DIR/scripts/brief.mjs\"",
+            "timeout": 30,
+            "statusMessage": "Reading where the work stands"
           }
         ]
       }

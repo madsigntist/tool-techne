@@ -5,6 +5,25 @@ their causes are in [DEFECT-REGISTER.md](DEFECT-REGISTER.md).
 
 ## Unreleased
 
+- **Sessions start from a one-page brief, and session documents have a
+  size budget.** A new kit module, `brief` (`scripts/brief.mjs`), prints
+  ROADMAP's first section, the decision count, the register's index and
+  every row that can recur; new tools carry it and run it from the
+  SessionStart hook. `check-standard.mjs` warns on a ROADMAP over 40 KB or
+  with more than 10 ticked boxes, a register over 150 KB, and a Decisions
+  heading past the third section; `tool.json` `docMaxKB` raises a budget.
+  `--list` shows each tool's sizes. ROADMAP's order is now where to start,
+  then Decisions, as the skeleton already had it. Existing tools add
+  `"brief"` to `kit` and run `kit.mjs sync`.
+- **The feature plan template is leaner.** The check runs once at the
+  start and after each change, not before and after; the next-session
+  prompt starts from the brief instead of re-reading AGENTS.md; a "Waiting
+  on the person" table blocks the next session when something has waited
+  longer than one; finished session blocks shrink to one line; token counts
+  are asked for, not written as "not shown".
+- **Fix: the standard lists `check-colors`, and the example manifest says
+  standard 2.**
+
 - **Every tool with a port owns a hundred, panels included.** A new
   panel takes the first port of the next unused hundred, as an app does,
   instead of the next free port from 4870. `check-standard --all` fails
