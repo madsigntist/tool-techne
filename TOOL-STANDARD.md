@@ -83,7 +83,7 @@ path is written down.
 | `reads` | Paths outside the folder the tool reads. Read-only, always |
 | `vendored` | Files copied in from elsewhere: `{ "path", "from", "forked" }`. A copy that differs from its source is reported unless `forked: true` |
 | `kit` | The kit modules the tool uses (section 3). Each copy must match the kit. **Checked** |
-| `guard` | `null`, or `{ "open": ["data"] }` for the edit guard |
+| `guard` | `{ "open": ["data"] }` for the edit guard; `false` when the person has decided against it; `null` while undecided, which a shared tool is warned about. **Checked** |
 | `agentsMaxLines` | Optional. A higher AGENTS.md limit than 250, with the reason in ROADMAP decisions (section 5). **Checked** |
 | `docMaxKB` | Optional. `{ "roadmap": n, "register": n }`: higher size budgets than 40 and 150 KB, with the reason in ROADMAP decisions (section 5). **Checked** |
 

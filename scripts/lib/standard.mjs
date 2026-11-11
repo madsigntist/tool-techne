@@ -476,8 +476,9 @@ export function checkTool(dir, ctx = {ports: new Map()}) {
   if (m.guard) {
     if (!fs.existsSync(path.join(dir, 'scripts', 'hooks', 'tool-guard.mjs'))) fails.push('guard is set but scripts/hooks/tool-guard.mjs is missing');
     if (!JSON.stringify(hooks.PreToolUse || []).includes('tool-guard')) fails.push('guard is set but no PreToolUse hook runs tool-guard');
-  } else if (m.shared) {
-    warns.push('shared tool without the edit guard: one-off fixes can turn into tool changes');
+  } else if (m.shared && m.guard !== false) {
+    // null is undecided and warns; false is the person's decided no.
+    warns.push('shared tool without the edit guard: one-off fixes can turn into tool changes (set "guard": false if that is decided)');
   }
 
   return {dir, name, fails, warns, manifest: m};

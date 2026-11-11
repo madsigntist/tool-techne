@@ -23,6 +23,9 @@ their causes are in [DEFECT-REGISTER.md](DEFECT-REGISTER.md).
   are asked for, not written as "not shown".
 - **Fix: the standard lists `check-colors`, and the example manifest says
   standard 2.**
+- **`"guard": false` is a decided no.** A shared tool whose person has
+  chosen no edit guard sets it, and the standing warning stops. `null`
+  still means undecided and still warns.
 
 - **Every tool with a port owns a hundred, panels included.** A new
   panel takes the first port of the next unused hundred, as an app does,

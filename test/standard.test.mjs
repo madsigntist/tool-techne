@@ -265,6 +265,11 @@ test('warnings: long AGENTS.md, a missing AI pointer, vendored drift, shared wit
   m.vendored[0].forked = true;
   fs.writeFileSync(path.join(t.dir, 'tool.json'), JSON.stringify(m));
   assert.ok(!checkTool(t.dir).warns.some((w) => /vendored/.test(w)));
+
+  // "guard": false is a decided no and stops the warning; null keeps it.
+  assert.ok(checkTool(t.dir).warns.some((w) => /without the edit guard/.test(w)));
+  fs.writeFileSync(path.join(t.dir, 'tool.json'), JSON.stringify({...m, guard: false}));
+  assert.ok(!checkTool(t.dir).warns.some((w) => /without the edit guard/.test(w)));
 });
 
 test('secrets: the scan fails on each kind of secret, and the whole check fails with it', () => {
