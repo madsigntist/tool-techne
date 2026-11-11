@@ -21,6 +21,8 @@ scaffold, the stacks or the checks.
 
 ## Read first
 
+Start every session from `node scripts/brief.mjs` (the SessionStart hook runs it). It prints ROADMAP's "Start here" and the register index, so read the rest of those files only for the area you are working in.
+
 | File | When |
 | --- | --- |
 | [TOOL-STANDARD.md](TOOL-STANDARD.md) | The standard. Changing it changes every future tool |

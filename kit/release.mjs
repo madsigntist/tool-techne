@@ -174,6 +174,29 @@ ok('no uncommitted changes');
 if (sh('git', ['rev-parse', '-q', '--verify', `refs/tags/${tag}`]).ok) die(`${tag} is already tagged. Use the next version.`);
 ok(`${tag} is not tagged yet`);
 
+/**
+ * Warns when ROADMAP "Start here" names an older version than the one being
+ * released, so the next session does not open on a stale pointer.
+ * @return {void}
+ */
+function warnStaleStartHere() {
+  const file = path.join(HERE, 'ROADMAP.md');
+  if (!fs.existsSync(file)) return;
+  const text = fs.readFileSync(file, 'utf8');
+  const m = /^##\s+Start here[^\n]*\n([\s\S]*?)(?=^##\s|(?![\s\S]))/m.exec(text);
+  if (!m) return;
+  const cmp = (a, b) => a.reduce((d, n, i) => d || n - b[i], 0);
+  const target = version.split('.').map(Number);
+  const older = [...m[1].matchAll(/v?(d+).(d+).(d+)/g)]
+    .map((x) => [x[0], x.slice(1).map(Number)])
+    .filter(([, v]) => cmp(v, target) < 0)
+    .map(([raw]) => raw);
+  if (older.length) {
+    console.log(`  WARN  ROADMAP "Start here" names ${[...new Set(older)].join(', ')}, older than ${version}. Update it before releasing.`);
+  }
+}
+warnStaleStartHere();
+
 console.log('  ...   running the full check');
 if (!sh(process.execPath, ['scripts/check.mjs']).ok) die('the check fails. Run node scripts/check.mjs to see why.');
 ok('the full check passes');
