@@ -187,7 +187,7 @@ function warnStaleStartHere() {
   if (!m) return;
   const cmp = (a, b) => a.reduce((d, n, i) => d || n - b[i], 0);
   const target = version.split('.').map(Number);
-  const older = [...m[1].matchAll(/v?(d+).(d+).(d+)/g)]
+  const older = [...m[1].matchAll(/\bv?(\d+)\.(\d+)\.(\d+)\b/g)]
     .map((x) => [x[0], x.slice(1).map(Number)])
     .filter(([, v]) => cmp(v, target) < 0)
     .map(([raw]) => raw);
