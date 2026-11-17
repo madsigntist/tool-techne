@@ -2,7 +2,7 @@
 #
 # Semgrep: scans this tool's own code for risky patterns (shell commands
 # built from input, paths that escape a folder, raw HTML, keys in code).
-# Runs on Linux only: Semgrep has no Windows build.
+# Runs on a Linux runner: Semgrep supports Windows only in beta.
 #
 # npm audit: checks every package in package-lock.json against npm's list
 # of known vulnerabilities, so a bad package is caught the day it is added,
